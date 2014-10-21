@@ -24,9 +24,9 @@ def CalcForce(pos1, pos2, mass1, mass2):
 
 numParticles = 2
 particleList = []
-timeStepSize = 0.1
+timeStepSize = 0.01
 
-particle1 = Particle([2.0, 0.0, 0.0], [0.0, 10.0, 0.0], 1)
+particle1 = Particle([50.0, 0.0, 0.0], [0.0, 1.0, 0.0], 1)
 particle2 = Particle([0.0, 0.0, 0.0], [0.0, 0.0, 0.0], 100)
 
 particleList.append(particle1)
@@ -36,7 +36,7 @@ file_ = open('results.txt', 'w')
 
 time = 0.0
 
-for timeStep in range(0, 10):
+for timeStep in range(0, 500000):
 	time += timeStepSize
 	for i, particle in enumerate(particleList):
 
@@ -62,7 +62,9 @@ for timeStep in range(0, 10):
 
 		if particle.mass == 1:
 			print str(time) + "\t" + str(particle.position[0]) + "\t" + str(particle.velocity[0]) + "\t" + str(particle.acceleration[0])
-			file_.write(str(time) + "\t" + str(particle.position[0]) + "\t" + str(particle.position[1]) + "\t" + str(particle.velocity[0]) + "\t" + str(particle.acceleration[0]) + '\n')
+			file_.write(str(time) + "\t" + str(particle.position[0]) + "\t" + str(particle.position[1]))
+		elif particle.mass == 100:
+			file_.write( "\t" + str(particle.position[0]) + "\t" + str(particle.position[1]) + '\n')
 file_.close()
 
 
