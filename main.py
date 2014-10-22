@@ -1,6 +1,7 @@
 import numpy as np
 import cmath
 import sys
+import h5py
 
 G = 1
 
@@ -24,7 +25,6 @@ def CalcForce(pos1, pos2, mass1, mass2):
 
 numParticles = 2
 particleList = []
-timeStepSize = 0.01
 
 particle1 = Particle([50.0, 0.0, 0.0], [0.0, 1.0, 0.0], 1)
 particle2 = Particle([0.0, 0.0, 0.0], [0.0, 0.0, 0.0], 100)
@@ -32,40 +32,43 @@ particle2 = Particle([0.0, 0.0, 0.0], [0.0, 0.0, 0.0], 100)
 particleList.append(particle1)
 particleList.append(particle2)
 
-file_ = open('results.txt', 'w')
-
+timeStepSize = 0.01
+numTimeSteps = 5000
 time = 0.0
 
-for timeStep in range(0, 500000):
+dataRowSize = numTimeSteps
+dataColumnSize = 3 * numParticles + 1
+
+f = h5py.File('results.hdf5', 'w-')
+dataArray = np.zeros((dataRowSize, dataColumnSize))
+dset = f.create_dataset("init", data=dataArray)
+
+for timeStep in range(0, numTimeSteps):
 	time += timeStepSize
+	dset[timeStep, 0] = time
+
 	for i, particle in enumerate(particleList):
 
-		for otherIndex in range(i+1, numParticles):
+		for otherIndex in range(i + 1, numParticles):
 
 			otherParticle = particleList[otherIndex]
 			force = CalcForce(particle.position, otherParticle.position, particle.mass, otherParticle.mass)
 			particle.accumulatedForce += force
 			otherParticle.accumulatedForce -= force
-			
-			#print str(time) + "\t" + str(force[0]) + "\t" + str(particle.accumulatedForce[0]) + "\t" + str(otherParticle.accumulatedForce[0])
 
 		particleAcceleration = particle.accumulatedForce / particle.mass
-		#if particle.mass == 1:
-			#print particleAcceleration
 		
 		if timeStep == 0:
 			particle.acceleration = particleAcceleration
-		particle.position += np.multiply(particle.velocity, timeStepSize) + np.multiply(0.5 * timeStepSize**2, particle.acceleration)
+
+		particle.position += np.multiply(timeStepSize, particle.velocity) + np.multiply(0.5 * timeStepSize**2, particle.acceleration)
 		particle.velocity += np.multiply((0.5 * timeStepSize), (np.add(particle.acceleration, particleAcceleration)))
 		particle.acceleration = particleAcceleration
 		particle.accumulatedForce = [0.0, 0.0, 0.0]
 
-		if particle.mass == 1:
-			print str(time) + "\t" + str(particle.position[0]) + "\t" + str(particle.velocity[0]) + "\t" + str(particle.acceleration[0])
-			file_.write(str(time) + "\t" + str(particle.position[0]) + "\t" + str(particle.position[1]))
-		elif particle.mass == 100:
-			file_.write( "\t" + str(particle.position[0]) + "\t" + str(particle.position[1]) + '\n')
-file_.close()
+		dset[timeStep, 3 * i + 1] = particle.position[0]
+		dset[timeStep, 3 * i + 2] = particle.position[1]
+		dset[timeStep, 3 * i + 3] = particle.position[2]
 
 
 
