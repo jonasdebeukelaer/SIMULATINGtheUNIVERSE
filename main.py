@@ -23,7 +23,6 @@ def CalcForce(pos1, pos2, mass1, mass2):
 	force = np.multiply(unitVector, force)
 	return force
 
-numParticles = 2
 particleList = []
 
 particle1 = Particle([50.0, 0.0, 0.0], [0.0, 1.0, 0.0], 1)
@@ -32,6 +31,8 @@ particle2 = Particle([0.0, 0.0, 0.0], [0.0, 0.0, 0.0], 100)
 particleList.append(particle1)
 particleList.append(particle2)
 
+numParticles = len(particleList)
+
 timeStepSize = 0.01
 numTimeSteps = 5000
 time = 0.0
@@ -39,7 +40,7 @@ time = 0.0
 dataRowSize = numTimeSteps
 dataColumnSize = 3 * numParticles + 1
 
-f = h5py.File('results.hdf5', 'w-')
+f = h5py.File('results.hdf5', 'w')
 dataArray = np.zeros((dataRowSize, dataColumnSize))
 dset = f.create_dataset("init", data=dataArray)
 
