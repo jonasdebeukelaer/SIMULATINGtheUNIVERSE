@@ -34,7 +34,7 @@ particleList.append(particle2)
 numParticles = len(particleList)
 
 timeStepSize = 0.01
-numTimeSteps = 5000
+numTimeSteps = 50
 time = 0.0
 
 dataRowSize = numTimeSteps
@@ -70,10 +70,6 @@ for timeStep in range(0, numTimeSteps):
 		dset[timeStep, 3 * i + 1] = particle.position[0]
 		dset[timeStep, 3 * i + 2] = particle.position[1]
 		dset[timeStep, 3 * i + 3] = particle.position[2]
-
-
-
-
 
 
 
