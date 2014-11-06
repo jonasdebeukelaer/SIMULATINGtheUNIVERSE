@@ -1,7 +1,6 @@
 import numpy as np
-import cmath
+import math
 import sys
-import h5py
 
 G = 1
 
@@ -25,7 +24,7 @@ def CalcForce(pos1, pos2, mass1, mass2):
 
 particleList = []
 
-particle1 = Particle([50.0, 0.0, 0.0], [0.0, 1.0, 0.0], 1)
+particle1 = Particle([50.0, 0.0, 0.0], [0.0, 1.4135, 0.0], 1)
 particle2 = Particle([0.0, 0.0, 0.0], [0.0, 0.0, 0.0], 100)
 
 particleList.append(particle1)
@@ -34,19 +33,14 @@ particleList.append(particle2)
 numParticles = len(particleList)
 
 timeStepSize = 0.01
-numTimeSteps = 50
+numTimeSteps = 5
 time = 0.0
-
-dataRowSize = numTimeSteps
-dataColumnSize = 3 * numParticles + 1
-
-f = h5py.File('results.hdf5', 'w')
-dataArray = np.zeros((dataRowSize, dataColumnSize))
-dset = f.create_dataset("init", data=dataArray)
 
 for timeStep in range(0, numTimeSteps):
 	time += timeStepSize
-	dset[timeStep, 0] = time
+
+	f = open("values_frame%d.3D" % (timeStep), "wt")
+	f.write("x y z VelocityMagnitude\n")
 
 	for i, particle in enumerate(particleList):
 
@@ -64,12 +58,16 @@ for timeStep in range(0, numTimeSteps):
 
 		particle.position += np.multiply(timeStepSize, particle.velocity) + np.multiply(0.5 * timeStepSize**2, particle.acceleration)
 		particle.velocity += np.multiply((0.5 * timeStepSize), (np.add(particle.acceleration, particleAcceleration)))
+		velocityMagnitude = ((particle.velocity[0])**2 + (particle.velocity[1])**2 + (particle.velocity[2])**2)
 		particle.acceleration = particleAcceleration
 		particle.accumulatedForce = [0.0, 0.0, 0.0]
 
-		dset[timeStep, 3 * i + 1] = particle.position[0]
-		dset[timeStep, 3 * i + 2] = particle.position[1]
-		dset[timeStep, 3 * i + 3] = particle.position[2]
+		if particle.mass == 100:
+			particle.position = [0.0, 0.0, 0.0]
+
+		f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], velocityMagnitude))
+
+	f.close()
 
 
 
