@@ -33,13 +33,13 @@ particleList.append(particle2)
 numParticles = len(particleList)
 
 timeStepSize = 0.01
-numTimeSteps = 5
+numTimeSteps = 50000
 time = 0.0
 
 for timeStep in range(0, numTimeSteps):
 	time += timeStepSize
 
-	f = open("values_frame%d.3D" % (timeStep), "wt")
+	f = open("Results/values_frame%d.3D" % (timeStep), "wt")
 	f.write("x y z VelocityMagnitude\n")
 
 	for i, particle in enumerate(particleList):
