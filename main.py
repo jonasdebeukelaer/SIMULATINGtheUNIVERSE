@@ -33,14 +33,17 @@ particleList.append(particle2)
 numParticles = len(particleList)
 
 timeStepSize = 0.01
-numTimeSteps = 50000
+numTimeSteps = 20000
+shootEvery = 100
 time = 0.0
 
 for timeStep in range(0, numTimeSteps):
 	time += timeStepSize
+	shoot = True if (timeStep % shootEvery) == 0 else False
 
-	f = open("Results/values_frame%d.3D" % (timeStep), "wt")
-	f.write("x y z VelocityMagnitude\n")
+	if shoot:
+		f = open("Results/values_frame%d.3D" % (timeStep), "w")
+		f.write("x y z VelocityMagnitude\n")
 
 	for i, particle in enumerate(particleList):
 
@@ -65,9 +68,12 @@ for timeStep in range(0, numTimeSteps):
 		if particle.mass == 100:
 			particle.position = [0.0, 0.0, 0.0]
 
-		f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], velocityMagnitude))
+		if shoot:
+			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], velocityMagnitude))
 
-	f.close()
+	if shoot:
+		f.write("%f %f %f %f\n%f %f %f %f\n" % (50., 50., 50., 0., -50., -50., -50., 0.))
+		f.close()
 
 
 
