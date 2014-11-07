@@ -1,6 +1,7 @@
 import numpy as np
 import math
 import sys
+import random
 
 G = 1
 
@@ -22,18 +23,57 @@ def CalcForce(pos1, pos2, mass1, mass2):
 	force = np.multiply(unitVector, force)
 	return force
 
-particleList = []
+def InitialiseParticles(numParticles, initialisationResolution, maxCoordinate, maxVelocity, positionDistribution, velocityDistribution):
+	particleList = []
+	#maxCoordinates is randomMaxCoordinates in the main section
+	
+	for i in range(0, numParticles):
+		newParticle = Particle([0, 0, 0] ,[0, 0, 0], 1)
+		particleList.append(newParticle)
 
-particle1 = Particle([50.0, 0.0, 0.0], [0.0, 1.4135, 0.0], 1)
-particle2 = Particle([0.0, 0.0, 0.0], [0.0, 0.0, 0.0], 100)
+	#random coordinates dist
+	if positionDistribution == 0:
+		for particle in particleList:
+			x = random.randrange(-maxCoordinate, maxCoordinate) * initialisationResolution
+			y = random.randrange(-maxCoordinate, maxCoordinate) * initialisationResolution
+			z = random.randrange(-maxCoordinate, maxCoordinate) * initialisationResolution
+			particle.position = [x, y, z]
 
-particleList.append(particle1)
-particleList.append(particle2)
+	#random velocity dist
+	if velocityDistribution == 0:
+		for particle in particleList:
+			xVelocity = random.randrange(-maxVelocity, maxVelocity) * initialisationResolution
+			yVelocity = random.randrange(-maxVelocity, maxVelocity) * initialisationResolution
+			zVelocity = random.randrange(-maxVelocity, maxVelocity) * initialisationResolution
+			particle.velocity = [xVelocity, yVelocity, zVelocity]
 
-numParticles = len(particleList)
+	#shell of particles distribution
+	if positionDistribution == 1:
+		#MAGIIIIC
+		x = 1
+
+	#zero velocity distribution
+	if velocityDistribution == 1:
+		#do nothing
+		v = 1
+
+	return particleList
+
+
+random.seed(1234)
+
+numParticles = 20
+initialisationResolution = 0.1
+maxCoordinate = 100
+randomMaxCoordinates = maxCoordinate / initialisationResolution
+maxVelocity = 1
+positionDistribution = 0
+velocityDistribution = 0
+
+particleList = InitialiseParticles(numParticles, initialisationResolution, randomMaxCoordinates, maxVelocity, positionDistribution, velocityDistribution)
 
 timeStepSize = 0.01
-numTimeSteps = 20000
+numTimeSteps = 100000
 shootEvery = 100
 time = 0.0
 
@@ -72,7 +112,7 @@ for timeStep in range(0, numTimeSteps):
 			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], velocityMagnitude))
 
 	if shoot:
-		f.write("%f %f %f %f\n%f %f %f %f\n" % (50., 50., 50., 0., -50., -50., -50., 0.))
+		f.write("%f %f %f %f\n%f %f %f %f\n" % (maxCoordinate, maxCoordinate, maxCoordinate, 0., -maxCoordinate, -maxCoordinate, -maxCoordinate, 0.))
 		f.close()
 
 
