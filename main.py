@@ -49,8 +49,17 @@ def InitialiseParticles(numParticles, initialisationResolution, maxCoordinate, m
 
 	#shell of particles distribution
 	if positionDistribution == 1:
-		#MAGIIIIC
-		x = 1
+		r = maxCoordinate
+		steps = int(math.sqrt(numParticles))
+		for thetaIndex in range(0, steps):
+			oneTheta = 2 * math.pi * thetaIndex / (steps-1)
+			for phiIndex in range(0, steps):
+				onePhi = math.acos(phiIndex / (steps-1) * 2 - 1)
+				x = r * math.sin(oneTheta) * math.cos(onePhi)
+				y = r * math.sin(oneTheta) * math.sin(onePhi)
+				z = r * math.cos(oneTheta)
+				print "%f - %f - %f" % (x,y,z)
+				particleList[(thetaIndex * steps) + phiIndex].position = [x, y, z]
 
 	#zero velocity distribution
 	if velocityDistribution == 1:
@@ -62,18 +71,18 @@ def InitialiseParticles(numParticles, initialisationResolution, maxCoordinate, m
 
 random.seed(1234)
 
-numParticles = 20
+numParticles = 100
 initialisationResolution = 0.1
-maxCoordinate = 100
+maxCoordinate = 5000
 randomMaxCoordinates = maxCoordinate / initialisationResolution
 maxVelocity = 1
-positionDistribution = 0
-velocityDistribution = 0
+positionDistribution = 1
+velocityDistribution = 1
 
 particleList = InitialiseParticles(numParticles, initialisationResolution, randomMaxCoordinates, maxVelocity, positionDistribution, velocityDistribution)
 
 timeStepSize = 0.01
-numTimeSteps = 100000
+numTimeSteps = 100
 shootEvery = 100
 time = 0.0
 
