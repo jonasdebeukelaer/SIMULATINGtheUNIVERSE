@@ -28,7 +28,7 @@ def InitialiseParticles(numParticles, initialisationResolution, maxCoordinate, m
 	#maxCoordinates is randomMaxCoordinates in the main section
 	
 	for i in range(0, numParticles):
-		newParticle = Particle([0, 0, 0] ,[0, 0, 0], 1)
+		newParticle = Particle([0., 0., 0.] ,[0., 0., 0.], 1)
 		particleList.append(newParticle)
 
 	#random coordinates dist
@@ -39,6 +39,22 @@ def InitialiseParticles(numParticles, initialisationResolution, maxCoordinate, m
 			z = random.randrange(-maxCoordinate, maxCoordinate) * initialisationResolution
 			particle.position = [x, y, z]
 
+		#shell of particles distribution
+	elif positionDistribution == 1:
+		r = maxCoordinate * initialisationResolution
+		for particle in particleList:
+			theta = 2 * math.pi * random.random()
+			phi = math.acos(2 * random.random() - 1)
+
+			x = r * math.sin(theta) * math.cos(phi)
+			y = r * math.sin(theta) * math.sin(phi)
+			z = r * math.cos(theta)
+
+			particle.position = [x, y, z]
+
+	else:
+		print 'Invalid position distribution selected'
+
 	#random velocity dist
 	if velocityDistribution == 0:
 		for particle in particleList:
@@ -47,43 +63,35 @@ def InitialiseParticles(numParticles, initialisationResolution, maxCoordinate, m
 			zVelocity = random.randrange(-maxVelocity, maxVelocity) * initialisationResolution
 			particle.velocity = [xVelocity, yVelocity, zVelocity]
 
-	#shell of particles distribution
-	if positionDistribution == 1:
-		r = maxCoordinate
-		steps = int(math.sqrt(numParticles))
-		for thetaIndex in range(0, steps):
-			oneTheta = 2 * math.pi * thetaIndex / (steps-1)
-			for phiIndex in range(0, steps):
-				onePhi = math.acos(phiIndex / (steps-1) * 2 - 1)
-				x = r * math.sin(oneTheta) * math.cos(onePhi)
-				y = r * math.sin(oneTheta) * math.sin(onePhi)
-				z = r * math.cos(oneTheta)
-				print "%f - %f - %f" % (x,y,z)
-				particleList[(thetaIndex * steps) + phiIndex].position = [x, y, z]
-
 	#zero velocity distribution
-	if velocityDistribution == 1:
-		#do nothing
-		v = 1
+	elif velocityDistribution == 1:
+		for particle in particleList:
+			particle.velocity = [0, 0, 0]
+
+	else:
+		print 'Invalid velocity distribution selected'
 
 	return particleList
 
 
 random.seed(1234)
 
-numParticles = 100
+numParticles = 50
 initialisationResolution = 0.1
-maxCoordinate = 5000
+maxCoordinate = 50
 randomMaxCoordinates = maxCoordinate / initialisationResolution
 maxVelocity = 1
 positionDistribution = 1
 velocityDistribution = 1
 
 particleList = InitialiseParticles(numParticles, initialisationResolution, randomMaxCoordinates, maxVelocity, positionDistribution, velocityDistribution)
+centreParticle = Particle([0., 0., 0.], [0., 0., 0.,], 20)
+particleList.append(centreParticle)
+numParticles += 1
 
 timeStepSize = 0.01
 numTimeSteps = 100
-shootEvery = 100
+shootEvery = 10
 time = 0.0
 
 for timeStep in range(0, numTimeSteps):
@@ -113,9 +121,6 @@ for timeStep in range(0, numTimeSteps):
 		velocityMagnitude = ((particle.velocity[0])**2 + (particle.velocity[1])**2 + (particle.velocity[2])**2)
 		particle.acceleration = particleAcceleration
 		particle.accumulatedForce = [0.0, 0.0, 0.0]
-
-		if particle.mass == 100:
-			particle.position = [0.0, 0.0, 0.0]
 
 		if shoot:
 			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], velocityMagnitude))
