@@ -16,11 +16,12 @@ class Particle:
 
 def CalcForce(pos1, pos2, mass1, mass2):
 
+	epsilon = 2
 	separation = np.subtract(pos2, pos1)
-	separationMagnitudeSquared = sum(separation**2)
-	force = G * mass1 * mass2 / separationMagnitudeSquared
-	unitVector = np.divide(separation, separationMagnitudeSquared**0.5)
-	force = np.multiply(unitVector, force)
+	separationMagnitudeSquared = sum(separation**2) + epsilon**2
+	force = G * mass1 * mass2 / separationMagnitudeSquared**1.5
+	#unitVector = np.divide(separation, separationMagnitudeSquared**0.5)
+	force = np.multiply(separation, force)
 	return force
 
 def InitialiseParticles(numParticles, initialisationResolution, maxCoordinate, maxVelocity, positionDistribution, velocityDistribution):
@@ -39,7 +40,7 @@ def InitialiseParticles(numParticles, initialisationResolution, maxCoordinate, m
 			z = random.randrange(-maxCoordinate, maxCoordinate) * initialisationResolution
 			particle.position = [x, y, z]
 
-		#shell of particles distribution
+	#random shell of particles distribution
 	elif positionDistribution == 1:
 		r = maxCoordinate * initialisationResolution
 		for particle in particleList:
@@ -51,6 +52,25 @@ def InitialiseParticles(numParticles, initialisationResolution, maxCoordinate, m
 			z = r * math.cos(theta)
 
 			particle.position = [x, y, z]
+
+	#Even shell of particles distribution
+	elif positionDistribution == 2:
+		r = maxCoordinate * initialisationResolution
+		
+		golden_angle = np.pi * (3 - np.sqrt(5))
+		theta = golden_angle * np.arange(numParticles)
+		z = np.linspace(r - 1.0 / numParticles, 1.0 / numParticles - r, numParticles)
+		radius = np.sqrt((r**2 - z * z))
+		 
+		points = np.zeros((numParticles, 3))
+		points[:,0] = radius * np.cos(theta)
+		points[:,1] = radius * np.sin(theta)
+		points[:,2] = z
+
+		i = 0
+		for particle in particleList:
+			particle.position = points[i, :]
+			i+=1
 
 	else:
 		print 'Invalid position distribution selected'
@@ -74,29 +94,35 @@ def InitialiseParticles(numParticles, initialisationResolution, maxCoordinate, m
 	return particleList
 
 
-random.seed(8932)
+random.seed(89321)
 
-numParticles = 100
+numParticles = 36
 initialisationResolution = 0.1
 maxCoordinate = 50
 randomMaxCoordinates = maxCoordinate / initialisationResolution
 maxVelocity = 1
-positionDistribution = 1
+positionDistribution = 2
 velocityDistribution = 1
 
 particleList = InitialiseParticles(numParticles, initialisationResolution, randomMaxCoordinates, maxVelocity, positionDistribution, velocityDistribution)
-centreParticle = Particle([0., 0., 0.], [0., 0., 0.,], 20)
+centreParticle = Particle([0., 0., 0.], [0., 0., 0.,], 2)
 particleList.append(centreParticle)
 numParticles += 1
 
 timeStepSize = 0.01
-numTimeSteps = 1000
+numTimeSteps = 10000
 shootEvery = 100
 time = 0.0
 
 for timeStep in range(0, numTimeSteps):
 	time += timeStepSize
 	shoot = True if (timeStep % shootEvery) == 0 else False
+
+	#percentage counter
+	i = (float(timeStep) / numTimeSteps) * 100
+	if i == int(i):
+		sys.stdout.write("\r%d%%" % i)
+		sys.stdout.flush()
 
 	if shoot:
 		f = open("Results/values_frame%d.3D" % (timeStep), "w")
@@ -129,8 +155,8 @@ for timeStep in range(0, numTimeSteps):
 		f.write("%f %f %f %f\n%f %f %f %f\n" % (maxCoordinate, maxCoordinate, maxCoordinate, 0., -maxCoordinate, -maxCoordinate, -maxCoordinate, 0.))
 		f.close()
 
-
-
+sys.stdout.write("\r100%")
+sys.stdout.flush()
 
 
 
