@@ -43,9 +43,9 @@ def InitialiseParticles(numParticles, initialisationResolution, maxCoordinate, m
 	elif positionDistribution == 1:
 		r = maxCoordinate * initialisationResolution
 		for particle in particleList:
-			theta = 2 * math.pi * random.random()
-			phi = math.acos(2 * random.random() - 1)
-
+			theta = math.acos(random.uniform(-1., 1.))
+			phi = random.uniform(0., 2 * math.pi)
+			
 			x = r * math.sin(theta) * math.cos(phi)
 			y = r * math.sin(theta) * math.sin(phi)
 			z = r * math.cos(theta)
@@ -74,9 +74,9 @@ def InitialiseParticles(numParticles, initialisationResolution, maxCoordinate, m
 	return particleList
 
 
-random.seed(1234)
+random.seed(8932)
 
-numParticles = 50
+numParticles = 100
 initialisationResolution = 0.1
 maxCoordinate = 50
 randomMaxCoordinates = maxCoordinate / initialisationResolution
@@ -90,8 +90,8 @@ particleList.append(centreParticle)
 numParticles += 1
 
 timeStepSize = 0.01
-numTimeSteps = 100
-shootEvery = 10
+numTimeSteps = 1000
+shootEvery = 100
 time = 0.0
 
 for timeStep in range(0, numTimeSteps):
