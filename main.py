@@ -2,6 +2,7 @@ import numpy as np
 import math
 import sys
 import random
+import time
 
 G = 1
 
@@ -20,7 +21,6 @@ def CalcForce(pos1, pos2, mass1, mass2):
 	separation = np.subtract(pos2, pos1)
 	separationMagnitudeSquared = sum(separation**2) + epsilon**2
 	force = G * mass1 * mass2 / separationMagnitudeSquared**1.5
-	#unitVector = np.divide(separation, separationMagnitudeSquared**0.5)
 	force = np.multiply(separation, force)
 	return force
 
@@ -93,36 +93,37 @@ def InitialiseParticles(numParticles, initialisationResolution, maxCoordinate, m
 
 	return particleList
 
-
+start = time.time()
 random.seed(89321)
 
-numParticles = 36
+numParticles = 1
 initialisationResolution = 0.1
 maxCoordinate = 50
 randomMaxCoordinates = maxCoordinate / initialisationResolution
 maxVelocity = 1
 positionDistribution = 2
 velocityDistribution = 1
+hasCenterParticle = True
 
 particleList = InitialiseParticles(numParticles, initialisationResolution, randomMaxCoordinates, maxVelocity, positionDistribution, velocityDistribution)
-centreParticle = Particle([0., 0., 0.], [0., 0., 0.,], 2)
-particleList.append(centreParticle)
-numParticles += 1
+if hasCenterParticle:
+	centreParticle = Particle([0., 0., 0.], [0., 0., 0.,], 20)
+	particleList.append(centreParticle)
+	numParticles += 1
 
 timeStepSize = 0.01
-numTimeSteps = 10000
+numTimeSteps = 100000
 shootEvery = 100
-time = 0.0
+#time = 0.0
 
 for timeStep in range(0, numTimeSteps):
-	time += timeStepSize
+	#time += timeStepSize
 	shoot = True if (timeStep % shootEvery) == 0 else False
 
 	#percentage counter
 	i = (float(timeStep) / numTimeSteps) * 100
-	if i == int(i):
-		sys.stdout.write("\r%d%%" % i)
-		sys.stdout.flush()
+	sys.stdout.write("\r%.2f%%" % i)
+	sys.stdout.flush()
 
 	if shoot:
 		f = open("Results/values_frame%d.3D" % (timeStep), "w")
@@ -155,8 +156,9 @@ for timeStep in range(0, numTimeSteps):
 		f.write("%f %f %f %f\n%f %f %f %f\n" % (maxCoordinate, maxCoordinate, maxCoordinate, 0., -maxCoordinate, -maxCoordinate, -maxCoordinate, 0.))
 		f.close()
 
-sys.stdout.write("\r100%")
-sys.stdout.flush()
+end = time.time()
+sys.stdout.write("\n")
+print end - start
 
 
 
