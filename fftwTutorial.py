@@ -1,15 +1,16 @@
 import pyfftw
-import numpy
+import numpy as np
+from PIL import Image
 
-a = pyfftw.n_byte_align_empty(128, 16, 'complex128')
-b = pyfftw.n_byte_align_empty(128, 16, 'complex128')
-c = pyfftw.n_byte_align_empty(128, 16, 'complex128')
+lena = Image.open("lena_bw.bmp")
+lenaArray = np.array(lena)
 
-fft_object = pyfftw.FFTW(a, b)
-ifft_object = pyfftw.FFTW(b, c, direction='FFTW_BACKWARD')
+for i in range(0, 10000000):
+	lenaFFT = pyfftw.builders.fft(lenaArray)
+	transformLenaArray = lenaFFT()
 
-ar, ai = numpy.random.randn(2, 128)
-a[:] = ar + 1j*ai
+	inverseLenaFFT = pyfftw.builders.ifft(transformLenaArray)
+	lenaArray = inverseLenaFFT()
 
-fft_a = fft_object()
-ifft_b = ifft_object()
+smooshFaceLena = Image.fromarray(np.uint8(lenaArray))
+smooshFaceLena.save("Smoosh.bmp")
