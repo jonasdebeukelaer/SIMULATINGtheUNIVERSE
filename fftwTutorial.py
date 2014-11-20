@@ -2,6 +2,7 @@ import pyfftw
 import math
 import numpy as np
 from PIL import Image
+from scipy import signal
 
 def xyGaussianArray(shape, xSigma, ySigma):
 
@@ -29,7 +30,9 @@ def xyGaussianArray(shape, xSigma, ySigma):
 lena = Image.open("lena_bw.bmp")
 lenaArray = np.array(lena)
 
-gaussianSmoother = xyGaussianArray(lenaArray.shape, 10, 10)
+gaussianSmoother = xyGaussianArray(lenaArray.shape, 5, 5)
+
+
 
 lenaFFT = pyfftw.builders.rfft2(lenaArray)
 lenaTransform = lenaFFT()
@@ -37,10 +40,23 @@ lenaTransform = lenaFFT()
 gaussianFFT = pyfftw.builders.rfft2(gaussianSmoother)
 gaussianTransform = gaussianFFT()
 
-fourierSmoothedLena = np.multiply(lenaTransform, gaussianTransform)
+fourierSmoothedLena = lenaTransform * gaussianTransform
+#fourierSmoothedLena = np.zeros(shape=(gaussianTransform.shape))
+
+#Center is at 256 128
+fourierSmoothedLena[255][127] = 1.0
+#fourierSmoothedLena[255][129] = 1.0
+#fourierSmoothedLena[257][127] = 1.0
+#fourierSmoothedLena[257][129] = 1.0
 
 inverseLenaFFT = pyfftw.builders.irfft2(fourierSmoothedLena)
 smoothedLena = inverseLenaFFT()
 
+maxVal = np.amax(smoothedLena)
+smoothedLena *= (256 / maxVal)
+
+
 smooshFaceLena = Image.fromarray(np.uint8(smoothedLena))
+print smooshFaceLena
+
 smooshFaceLena.save("Smoosh.bmp")
