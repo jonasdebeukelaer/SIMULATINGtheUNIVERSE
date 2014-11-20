@@ -15,25 +15,31 @@ def xyGaussianArray(shape, xSigma, ySigma):
 
 	for x in range(0, xSize):
 		for y in range(0, ySize):
-			gaussianArray[x][y] = math.exp(-(((x-xCentre)**2/2.0*xSigma**2)+((y-yCentre)**2/2.0*ySigma**2)))
+			xNumerator = (x - xCentre)**2
+			yNumerator = (y - yCentre)**2
+
+			xDenominator = 2.0 * xSigma**2
+			yDenominator = 2.0 * ySigma**2
+
+			exponent = (xNumerator / xDenominator) + (yNumerator / yDenominator)
+			gaussianArray[x][y] = math.exp(-exponent)
 	
-	print gaussianArray
 	return gaussianArray
 
 lena = Image.open("lena_bw.bmp")
 lenaArray = np.array(lena)
 
-gaussianSmoother = xyGaussianArray(lenaArray.shape, 0.00001, 0.00001)
+gaussianSmoother = xyGaussianArray(lenaArray.shape, 10, 10)
 
-lenaFFT = pyfftw.builders.fft(lenaArray)
+lenaFFT = pyfftw.builders.rfft2(lenaArray)
 lenaTransform = lenaFFT()
 
-gaussianFFT = pyfftw.builders.fft(gaussianSmoother)
+gaussianFFT = pyfftw.builders.rfft2(gaussianSmoother)
 gaussianTransform = gaussianFFT()
 
-fourierSmoothedLena = np.multiply(gaussianTransform, lenaTransform)
+fourierSmoothedLena = np.multiply(lenaTransform, gaussianTransform)
 
-inverseLenaFFT = pyfftw.builders.ifft(fourierSmoothedLena)
+inverseLenaFFT = pyfftw.builders.irfft2(fourierSmoothedLena)
 smoothedLena = inverseLenaFFT()
 
 smooshFaceLena = Image.fromarray(np.uint8(smoothedLena))
