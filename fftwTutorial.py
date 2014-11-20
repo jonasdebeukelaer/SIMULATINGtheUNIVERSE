@@ -1,6 +1,7 @@
 import pyfftw
 import math
 import numpy as np
+from scipy import signal
 from PIL import Image
 from scipy import signal
 
@@ -32,31 +33,20 @@ lenaArray = np.array(lena)
 
 gaussianSmoother = xyGaussianArray(lenaArray.shape, 5, 5)
 
+lenaFFT     = pyfftw.builders.rfftn(lenaArray)
+gaussianFFT = pyfftw.builders.rfftn(gaussianSmoother)
+
+fourierSmoothedLena = lenaFFT() * gaussianFFT() 
+
+inverseFFT = pyfftw.builders.irfftn(fourierSmoothedLena)
+inverseLenaFFT = inverseFFT()
 
 
-lenaFFT = pyfftw.builders.rfft2(lenaArray)
-lenaTransform = lenaFFT()
+maxAmplitude = np.amax(inverseLenaFFT)
+print maxAmplitude
+inverseLenaFFT *= (256.0 / maxAmplitude)
 
-gaussianFFT = pyfftw.builders.rfft2(gaussianSmoother)
-gaussianTransform = gaussianFFT()
-
-fourierSmoothedLena = lenaTransform * gaussianTransform
-#fourierSmoothedLena = np.zeros(shape=(gaussianTransform.shape))
-
-#Center is at 256 128
-fourierSmoothedLena[255][127] = 1.0
-#fourierSmoothedLena[255][129] = 1.0
-#fourierSmoothedLena[257][127] = 1.0
-#fourierSmoothedLena[257][129] = 1.0
-
-inverseLenaFFT = pyfftw.builders.irfft2(fourierSmoothedLena)
-smoothedLena = inverseLenaFFT()
-
-maxVal = np.amax(smoothedLena)
-smoothedLena *= (256 / maxVal)
-
-
-smooshFaceLena = Image.fromarray(np.uint8(smoothedLena))
-print smooshFaceLena
-
+smooshFaceLena = Image.fromarray(np.uint8(inverseLenaFFT))
 smooshFaceLena.save("Smoosh.bmp")
+
+
