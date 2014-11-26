@@ -31,7 +31,7 @@ def xyGaussianArray(shape, xSigma, ySigma):
 lena = Image.open("lena_bw.bmp")
 lenaArray = np.array(lena)
 
-gaussianSmoother = xyGaussianArray(lenaArray.shape, 2, 2)
+gaussianSmoother = xyGaussianArray(lenaArray.shape, 20, 2)
 
 lenaFFT     = pyfftw.builders.rfftn(lenaArray)
 gaussianFFT = pyfftw.builders.rfftn(gaussianSmoother)
