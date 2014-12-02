@@ -66,16 +66,11 @@ sphereRadius = 20
 sphere = MakeSphere(volume, sphereRadius)
 gaussianSmoother = xyzGaussianArray(volume, 4, 4, 4)
 
-
-
-
 sphereFFT     = pyfftw.builders.rfftn(sphere)
 gaussianFFT = pyfftw.builders.rfftn(gaussianSmoother)
 
 gaussianTransform = gaussianFFT()
 sphereTransform = sphereFFT()
-print gaussianTransform.shape
-print sphereTransform.shape
 
 fourierSmoothedSphere = gaussianTransform * sphereTransform
 
@@ -134,8 +129,6 @@ for x in range(0, volume[0]):
 
 f.close()
 
-print fourierSmoothedSphere.shape
-
 f = open('gaussianSmoothedResults/3d_smoothing_2.3D', 'w')
 f.write('x\ty\tz\tAmplitude\n')
 f.write('%i\t%i\t%i\t%f\n' % (volume[0], volume[1], volume[2], 1))
@@ -159,8 +152,5 @@ for x in range(0, volume[0]):
 				f.write('%i\t%i\t%i\t%f\n' % (x, y, z, inverseSphereFFT[x][y][z]))
 
 f.close()
-
-#smooshFaceLena.save("pic_archive/Smoosh_%s.bmp" % (time.strftime("%c")))
-#smooshFaceLena.save("Smoosh.bmp")
 
 

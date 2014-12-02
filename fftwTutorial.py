@@ -37,9 +37,7 @@ lenaFFT     = pyfftw.builders.rfftn(lenaArray)
 gaussianFFT = pyfftw.builders.rfftn(gaussianSmoother)
 
 gaussianTransform = gaussianFFT()
-lenaTransform = lenaFFT()
-print gaussianTransform.shape
-print lenaTransform.shape
+lenaTransform = lenaFFT()q
 
 fourierSmoothedLena = gaussianTransform * lenaTransform
 
