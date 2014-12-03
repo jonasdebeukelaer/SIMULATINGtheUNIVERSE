@@ -12,7 +12,6 @@ class Particle:
 		self.position = position
 		self.velocity = velocity
 		self.mass = mass
-		self.accumulatedForce = float(0)
 		self.acceleration = [0.0, 0.0, 0.0]
 
 def InitialiseParticles(numParticles, initialisationResolution, maxCoordinate, maxVelocity, positionDistribution, velocityDistribution):
@@ -42,7 +41,7 @@ def InitialiseParticles(numParticles, initialisationResolution, maxCoordinate, m
 			y = r * math.sin(theta) * math.sin(phi)
 			z = r * math.cos(theta)
 
-			particle.position = [x, y, z]
+			particle.position = [x + 2*r, y + 2*r, z + 2*r]
 
 	#Even shell of particles distribution
 	elif positionDistribution == 2:
@@ -84,55 +83,118 @@ def InitialiseParticles(numParticles, initialisationResolution, maxCoordinate, m
 
 	return particleList
 
-def CalculateDensityField(volume, gridResolution, particleList):
+def CalculateDensityField(volume, gridResolution, particleList, populateArray = True):
 	meshShape = [volume[0]/gridResolution, volume[1]/gridResolution, volume[2]/gridResolution]
 	if meshShape[0] != int(meshShape[0]) or meshShape[1] != int(meshShape[1]) or meshShape[2] != int(meshShape[2]):
 		sys.exit("Error: non-integer cell number defined pleuz fix")
 
-	gravityFieldMesh = np.zeros((meshShape))
+	densityFieldMesh = np.zeros((meshShape))
 
-	for particle in particleList:
-		xMesh = int(particle.position[0] / gridResolution)
-		yMesh = int(particle.position[1] / gridResolution)
-		zMesh = int(particle.position[2] / gridResolution)
-		gravityFieldMesh[xMesh][yMesh][zMesh] += particle.mass
+	if populateArray:
+		for particle in particleList:
+			xMesh = int(particle.position[0] / gridResolution)
+			yMesh = int(particle.position[1] / gridResolution)
+			zMesh = int(particle.position[2] / gridResolution)
+			densityFieldMesh[xMesh][yMesh][zMesh] += particle.mass
 
-	gravityFieldMesh /= (gridResolution**3)
-	return gravityFieldMesh
+		densityFieldMesh /= (gridResolution**3)
 
-def SolvePotential(densityField):
+	return densityFieldMesh
+
+def CreateGreensFunction(shape):
+	greensArray = np.zeros((shape))
+
+	constant = 1
+	f = open('greensFunction.3D', 'w')
+	f.write('kx\tky\tkz\tval\n')
+
+	for l in range(0, shape[0]):
+		kx = 2 * math.pi * l / gridResolution
+		for m in range(0, shape[1]):
+			ky = 2 * math.pi * m / gridResolution
+			for n in range(0, shape[2]):
+				kz = 2 * math.pi * n /gridResolution
+				if l != 0 and m != 0 and n != 0:
+					greensArray[l][m][n] = -constant / ((math.sin(kx * 0.5))**2 + (math.sin(ky * 0.5))**2 + (math.sin(kz * 0.5))**2)
+
+				f.write('%d\t%d\t%d\t%f\n' % (kx, ky, kz, greensArray[l][m][n]))
+
+	f.close()
+	return greensArray
+
+def SolvePotential(densityField, greensFunction):
+	#greensFunctionRealSpace = pyfftw.builders.ifftn(greensFunction)
+	#greensFunctionFourierSpace = pyfftw.builders.
 	densityFieldFFT = pyfftw.builders.fftn(densityField)
-	
-	densityFieldConvoluted = densityFieldFFT * GreensFunction
+	densityFieldConvoluted = densityFieldFFT() * greensFunction
+	potentialFieldJumbled = pyfftw.builders.ifftn(densityFieldConvoluted)
+	potentialField = np.fft.fftshift(potentialFieldJumbled())
+	return potentialField
 
+def ConvertPotentialToForce(potentialField, gridResolution):
+	volume = potentialField.shape
+	forceField = np.zeros((volume, 3))
 
+	for i in range(0, volume[0]):
+		for j in range(0, volume[1]):
+			for k in range(0, volume[2]):
+				if i != 0 and i != (volume[0] - 1) and j != 0 and j != (volume[1] - 1) and k != 0 and k != (volume[2] - 1):
+					xForce = - (potentialField[i+1][j][k] - potentialField[i-1][j][k]) / (2 * gridResolution)
+					yForce = - (potentialField[i][j+1][k] - potentialField[i][j-1][k]) / (2 * gridResolution)
+					zForce = - (potentialField[i][j][k+1] - potentialField[i][j][k-1]) / (2 * gridResolution)
+
+					forceField[i][j][k][0] = xForce
+					forceField[i][j][k][1] = yForce
+					forceField[i][j][k][2] = zForce
+
+	return forceField
+
+def CalculateParticleAcceleration(particle, forceField):
+	xMesh = int(particle.position[0] / gridResolution)
+	yMesh = int(particle.position[1] / gridResolution)
+	zMesh = int(particle.position[2] / gridResolution)
+
+	particleAcceleration = (forceField[xMesh][yMesh][zMesh][0], forceField[xMesh][yMesh][zMesh][1], forceField[xMesh][yMesh][zMesh][2]) / particle.mass
+	return particleAcceleration
 
 start = time.time()
+print "Seeding..."
 random.seed(89321)
+print "Done\n"
 
 numParticles = 20
 initialisationResolution = 0.1
 maxCoordinate = 50
 randomMaxCoordinates = maxCoordinate / initialisationResolution
 maxVelocity = 1
-positionDistribution = 2
+positionDistribution = 1
 velocityDistribution = 1
 hasCenterParticle = True
 
+print "Initialising particles..."
 particleList = InitialiseParticles(numParticles, initialisationResolution, randomMaxCoordinates, maxVelocity, positionDistribution, velocityDistribution)
 if hasCenterParticle:
-	centreParticle = Particle([0., 0., 0.], [0., 0., 0.,], 20)
+	centreParticle = Particle([100., 100., 100.], [0., 0., 0.,], 20)
 	particleList.append(centreParticle)
 	numParticles += 1
+print "Done\n"
 
 timeStepSize = 0.01
 numTimeSteps = 1000
 shootEvery = 100
 
-volume = [100, 100, 100]
+volume = [200, 200, 200]
 gridResolution = 1
 
+print "Determining mesh shape..."
+densityField = CalculateDensityField(volume, gridResolution, particleList, False)
+print "Done\n"
 
+print "Calculating Green's function..."
+greensFunction = CreateGreensFunction(densityField.shape)
+print "Done\n"
+
+print "Iterating..."
 for timeStep in range(0, numTimeSteps):
 	#time += timeStepSize
 	shoot = True if (timeStep % shootEvery) == 0 else False
@@ -146,14 +208,32 @@ for timeStep in range(0, numTimeSteps):
 		f = open("Results/values_frame%d.3D" % (timeStep), "w")
 		f.write("x y z VelocityMagnitude\n")
 
-	densityField = CalculateDensityField(volume, gridResolution, particleList)
-	SolvePotential(densityField)
+	densityField   = CalculateDensityField(volume, gridResolution, particleList)
+	potentialField = SolvePotential(densityField, greensFunction)
+	forceField     = ConvertPotentialToForce(potentialField, gridResolution)
 
-	#	fft forward density field
-	#	multiply with greens
-	#	fft backwards
-	#determine force field
-	#update particles
+	for particle in particleList:
+
+		particleAcceleration = CalculateParticleAcceleration(particle, forceField)
+		
+		if timeStep == 0:
+			particle.acceleration = particleAcceleration
+
+		particle.position += np.multiply(timeStepSize, particle.velocity) + np.multiply(0.5 * timeStepSize**2, particle.acceleration)
+		particle.velocity += np.multiply((0.5 * timeStepSize), (np.add(particle.acceleration, particleAcceleration)))
+		velocityMagnitude = ((particle.velocity[0])**2 + (particle.velocity[1])**2 + (particle.velocity[2])**2)
+		particle.acceleration = particleAcceleration
+
+		if shoot:
+			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], velocityMagnitude))
+
+	if shoot:
+		f.write("%f %f %f %f\n%f %f %f %f\n" % (maxCoordinate, maxCoordinate, maxCoordinate, 0., -maxCoordinate, -maxCoordinate, -maxCoordinate, 0.))
+		f.close()
+
+end = time.time()
+sys.stdout.write("\n")
+print end - start
 
 
 
