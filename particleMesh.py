@@ -95,6 +95,9 @@ def CalculateDensityField(volume, gridResolution, particleList, populateArray = 
 			xMesh = int(particle.position[0] / gridResolution)
 			yMesh = int(particle.position[1] / gridResolution)
 			zMesh = int(particle.position[2] / gridResolution)
+			print xMesh
+			print yMesh
+			print zMesh
 			densityFieldMesh[xMesh][yMesh][zMesh] += particle.mass
 
 		densityFieldMesh /= (gridResolution**3)
@@ -102,14 +105,23 @@ def CalculateDensityField(volume, gridResolution, particleList, populateArray = 
 	return densityFieldMesh
 
 def CreateGreensFunction(shape):
+	shape = list(shape)
+	shape[2] = int(shape[2]/2) +1
+	print shape
 	greensArray = np.zeros((shape))
 
 	constant = 1
 	f = open('greensFunction.3D', 'w')
 	f.write('kx\tky\tkz\tval\n')
 
+
+	
 	for l in range(0, shape[0]):
-		kx = 2 * math.pi * l / gridResolution
+		if l <= shape[0]/2:
+			kx = 2 * math.pi * l / gridResolution
+		else:
+			kx = ((2 * math.pi * l) - shape[0])/ gridResolution
+			#OLI GO FROM HERE DON'T MESS IT UP!!!11!ONE
 		for m in range(0, shape[1]):
 			ky = 2 * math.pi * m / gridResolution
 			for n in range(0, shape[2]):
@@ -119,15 +131,16 @@ def CreateGreensFunction(shape):
 
 				f.write('%d\t%d\t%d\t%f\n' % (kx, ky, kz, greensArray[l][m][n]))
 
+
 	f.close()
 	return greensArray
 
 def SolvePotential(densityField, greensFunction):
 	#greensFunctionRealSpace = pyfftw.builders.ifftn(greensFunction)
 	#greensFunctionFourierSpace = pyfftw.builders.
-	densityFieldFFT = pyfftw.builders.fftn(densityField)
+	densityFieldFFT = pyfftw.builders.rfftn(densityField)
 	densityFieldConvoluted = densityFieldFFT() * greensFunction
-	potentialFieldJumbled = pyfftw.builders.ifftn(densityFieldConvoluted)
+	potentialFieldJumbled = pyfftw.builders.irfftn(densityFieldConvoluted)
 	potentialField = np.fft.fftshift(potentialFieldJumbled())
 	return potentialField
 
@@ -154,9 +167,7 @@ def CalculateParticleAcceleration(particle, forceField):
 	yMesh = int(particle.position[1] / gridResolution)
 	zMesh = int(particle.position[2] / gridResolution)
 
-	particleAcceleration = ((velocity / particle.mass) for velocity in forceField[xMesh][yMesh][zMesh])
-	print particleAcceleration
-	#particleAcceleration = (forceField[xMesh][yMesh][zMesh][0], forceField[xMesh][yMesh][zMesh][1], forceField[xMesh][yMesh][zMesh][2]) / particle.mass
+	particleAcceleration = (forceField[xMesh][yMesh][zMesh][0]/particle.mass, forceField[xMesh][yMesh][zMesh][1]/particle.mass, forceField[xMesh][yMesh][zMesh][2]/particle.mass)
 	return particleAcceleration
 
 start = time.time()
@@ -166,12 +177,12 @@ print "Done\n"
 
 numParticles = 20
 initialisationResolution = 0.1
-maxCoordinate = 50
+maxCoordinate = 14
 randomMaxCoordinates = maxCoordinate / initialisationResolution
 maxVelocity = 1
 positionDistribution = 1
 velocityDistribution = 1
-hasCenterParticle = True
+hasCenterParticle = False
 
 print "Initialising particles..."
 particleList = InitialiseParticles(numParticles, initialisationResolution, randomMaxCoordinates, maxVelocity, positionDistribution, velocityDistribution)
@@ -182,10 +193,10 @@ if hasCenterParticle:
 print"Done\n"
 
 timeStepSize = 0.01
-numTimeSteps = 1000
+numTimeSteps = 1
 shootEvery = 100
 
-volume = [200, 200, 200]
+volume = [41, 41, 41]
 gridResolution = 1
 
 print "Determining mesh shape..."
