@@ -41,7 +41,7 @@ def InitialiseParticles(numParticles, initialisationResolution, maxCoordinate, m
 			y = r * math.sin(theta) * math.sin(phi)
 			z = r * math.cos(theta)
 
-			particle.position = [x + 2*r, y + 2*r, z + 2*r]
+			particle.position = [x, y, z]
 
 	#Even shell of particles distribution
 	elif positionDistribution == 2:
@@ -83,8 +83,11 @@ def InitialiseParticles(numParticles, initialisationResolution, maxCoordinate, m
 
 	return particleList
 
+def FindMeshIndex(position, gridResolution, gridSize): 
+	return round((position / gridResolution) + (gridResolution / 2)) + ((gridSize / 2) - 1)
+
 def CalculateDensityField(volume, gridResolution, particleList, populateArray = True):
-	meshShape = [volume[0]/gridResolution, volume[1]/gridResolution, volume[2]/gridResolution]
+	meshShape = [volume[0] / gridResolution, volume[1] / gridResolution, volume[2] / gridResolution]
 	if meshShape[0] != int(meshShape[0]) or meshShape[1] != int(meshShape[1]) or meshShape[2] != int(meshShape[2]):
 		sys.exit("Error: non-integer cell number defined pleuz fix")
 
@@ -92,52 +95,46 @@ def CalculateDensityField(volume, gridResolution, particleList, populateArray = 
 
 	if populateArray:
 		for particle in particleList:
-			xMesh = int(particle.position[0] / gridResolution)
-			yMesh = int(particle.position[1] / gridResolution)
-			zMesh = int(particle.position[2] / gridResolution)
-			print xMesh
-			print yMesh
-			print zMesh
+			xMesh = FindMeshIndex(particle.position[0], gridResolution, meshShape[0])
+			yMesh = FindMeshIndex(particle.position[1], gridResolution, meshShape[1])
+			zMesh = FindMeshIndex(particle.position[2], gridResolution, meshShape[2])
+
 			densityFieldMesh[xMesh][yMesh][zMesh] += particle.mass
 
 		densityFieldMesh /= (gridResolution**3)
 
 	return densityFieldMesh
 
-def CreateGreensFunction(shape):
-	shape = list(shape)
-	shape[2] = int(shape[2]/2) +1
-	print shape
+def CreateGreensFunction(unalteredShape):
+	shape = (unalteredShape[0], unalteredShape[1], (unalteredShape[2] / 2) + 1)
 	greensArray = np.zeros((shape))
 
 	constant = 1
-	f = open('greensFunction.3D', 'w')
-	f.write('kx\tky\tkz\tval\n')
 
-
-	
 	for l in range(0, shape[0]):
-		if l <= shape[0]/2:
-			kx = 2 * math.pi * l / gridResolution
+		if l <= shape[0] / 2:
+			kx = 2 * math.pi * l / (shape[0] - 1)
 		else:
-			kx = ((2 * math.pi * l) - shape[0])/ gridResolution
-			#OLI GO FROM HERE DON'T MESS IT UP!!!11!ONE
+			kx = 2 * math.pi * (l - shape[0]) / (shape[0] - 1)
+
 		for m in range(0, shape[1]):
-			ky = 2 * math.pi * m / gridResolution
+			if m <= shape[1] / 2:
+				ky = 2 * math.pi * m / (shape[1] - 1)
+			else:
+				ky = 2 * math.pi * (m - shape[1]) / (shape[1] - 1)
+
 			for n in range(0, shape[2]):
-				kz = 2 * math.pi * n /gridResolution
-				if l != 0 and m != 0 and n != 0:
-					greensArray[l][m][n] = -constant / ((math.sin(kx * 0.5))**2 + (math.sin(ky * 0.5))**2 + (math.sin(kz * 0.5))**2)
+				if n <= shape[2] / 2:
+					kz = 2 * math.pi * n / (shape[2] - 1)
+				else:
+					kz = 2 * math.pi * (n - shape[2]) / (shape[2] - 1)
 
-				f.write('%d\t%d\t%d\t%f\n' % (kx, ky, kz, greensArray[l][m][n]))
+				if l != 0 or m != 0 or n != 0:
+					greensArray[l][m][n] = - constant / ((math.sin(kx * 0.5))**2 + (math.sin(ky * 0.5))**2 + (math.sin(kz * 0.5))**2)
 
-
-	f.close()
 	return greensArray
 
 def SolvePotential(densityField, greensFunction):
-	#greensFunctionRealSpace = pyfftw.builders.ifftn(greensFunction)
-	#greensFunctionFourierSpace = pyfftw.builders.
 	densityFieldFFT = pyfftw.builders.rfftn(densityField)
 	densityFieldConvoluted = densityFieldFFT() * greensFunction
 	potentialFieldJumbled = pyfftw.builders.irfftn(densityFieldConvoluted)
@@ -175,12 +172,12 @@ print "Seeding..."
 random.seed(89321)
 print "Done\n"
 
-numParticles = 20
+numParticles = 100
 initialisationResolution = 0.1
-maxCoordinate = 14
+maxCoordinate = 25
 randomMaxCoordinates = maxCoordinate / initialisationResolution
 maxVelocity = 1
-positionDistribution = 1
+positionDistribution = 0
 velocityDistribution = 1
 hasCenterParticle = False
 
@@ -190,13 +187,20 @@ if hasCenterParticle:
 	centreParticle = Particle([100., 100., 100.], [0., 0., 0.,], 20)
 	particleList.append(centreParticle)
 	numParticles += 1
+
+particleFile = open("PotentialInvestigation0.3D", 'w')
+particleFile.write("x\ty\tz\tValue\n")
+particleFile.write("50\t50\t50\t0\n-50\t-50\t-50\t0\n")
+for particle in particleList:
+	particleFile.write("%f\t%f\t%f\t%f\n" % (particle.position[0], particle.position[1], particle.position[2], particle.mass))
+particleFile.close()
 print"Done\n"
 
 timeStepSize = 0.01
 numTimeSteps = 1
 shootEvery = 100
 
-volume = [41, 41, 41]
+volume = [100, 100, 100]
 gridResolution = 1
 
 print "Determining mesh shape..."
@@ -210,39 +214,69 @@ print "Done\n"
 print "Iterating..."
 for timeStep in range(0, numTimeSteps):
 	#time += timeStepSize
-	shoot = True if (timeStep % shootEvery) == 0 else False
+	#shoot = True if (timeStep % shootEvery) == 0 else False
 
 	#percentage counter
 	i = (float(timeStep) / numTimeSteps) * 100
 	sys.stdout.write("\r%.2f%%" % i)
 	sys.stdout.flush()
 
-	if shoot:
-		f = open("Results/values_frame%d.3D" % (timeStep), "w")
-		f.write("x y z VelocityMagnitude\n")
+	#if shoot:
+		#f = open("Results/values_frame%d.3D" % (timeStep), "w")
+		#f.write("x y z VelocityMagnitude\n")
 
 	densityField   = CalculateDensityField(volume, gridResolution, particleList)
+	densityFile = open("PotentialInvestigation1.3D", 'w')
+	densityFile.write("x\ty\tz\tValue\n")
+	densityFile.write("50\t50\t50\t0\n-50\t-50\t-50\t0\n")
+	densityShape = densityField.shape
+	for i in range(0, densityShape[0]):
+		x = (i - ((densityShape[0] / 2) - 1)) * gridResolution
+		for j in range(0, densityShape[1]):
+			y = (j - ((densityShape[1] / 2) - 1)) * gridResolution
+			for k in range(0, densityShape[2]):
+				z = (k - ((densityShape[2] / 2) - 1)) * gridResolution
+				if densityField[i][j][k] != 0:
+					densityFile.write("%f\t%f\t%f\t%f\n" % (x, y, z, densityField[i][j][k]))
+	densityFile.close()
+
 	potentialField = SolvePotential(densityField, greensFunction)
-	forceField     = ConvertPotentialToForce(potentialField, gridResolution)
+	potentialFile = open("PotentialInvestigation2.3D", 'w')
+	potentialFile.write("x\ty\tz\tValue\n")
+	potentialFile.write("50\t50\t50\t0\n-50\t-50\t-50\t0\n")
+	potentialShape = potentialField.shape
+	if potentialShape != densityShape:
+		sys.exit("Error: something definitely went wrong")
+	for i in range(0, potentialShape[0]):
+		x = (i - ((potentialShape[0] / 2) - 1)) * gridResolution
+		for j in range(0, potentialShape[1]):
+			y = (j - ((potentialShape[1] / 2) - 1)) * gridResolution
+			for k in range(0, potentialShape[2]):
+				z = (k - ((potentialShape[2] / 2) - 1)) * gridResolution
+				if potentialField[i][j][k] != 0:
+					potentialFile.write("%f\t%f\t%f\t%f\n" % (x, y, z, potentialField[i][j][k]))
+	potentialFile.close()
 
-	for particle in particleList:
+	#forceField     = ConvertPotentialToForce(potentialField, gridResolution)
 
-		particleAcceleration = CalculateParticleAcceleration(particle, forceField)
+	#for particle in particleList:
+
+		#particleAcceleration = CalculateParticleAcceleration(particle, forceField)
 		
-		if timeStep == 0:
-			particle.acceleration = particleAcceleration
+		#if timeStep == 0:
+			#particle.acceleration = particleAcceleration
 
-		particle.position += np.multiply(timeStepSize, particle.velocity) + np.multiply(0.5 * timeStepSize**2, particle.acceleration)
-		particle.velocity += np.multiply((0.5 * timeStepSize), (np.add(particle.acceleration, particleAcceleration)))
-		velocityMagnitude = ((particle.velocity[0])**2 + (particle.velocity[1])**2 + (particle.velocity[2])**2)
-		particle.acceleration = particleAcceleration
+		#particle.position += np.multiply(timeStepSize, particle.velocity) + np.multiply(0.5 * timeStepSize**2, particle.acceleration)
+		#particle.velocity += np.multiply((0.5 * timeStepSize), (np.add(particle.acceleration, particleAcceleration)))
+		#velocityMagnitude = ((particle.velocity[0])**2 + (particle.velocity[1])**2 + (particle.velocity[2])**2)
+		#particle.acceleration = particleAcceleration
 
-		if shoot:
-			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], velocityMagnitude))
+		#if shoot:
+			#f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], velocityMagnitude))
 
-	if shoot:
-		f.write("%f %f %f %f\n%f %f %f %f\n" % (maxCoordinate, maxCoordinate, maxCoordinate, 0., -maxCoordinate, -maxCoordinate, -maxCoordinate, 0.))
-		f.close()
+	#if shoot:
+		#f.write("%f %f %f %f\n%f %f %f %f\n" % (maxCoordinate, maxCoordinate, maxCoordinate, 0., -maxCoordinate, -maxCoordinate, -maxCoordinate, 0.))
+		#f.close()
 
 end = time.time()
 sys.stdout.write("\n")
