@@ -133,7 +133,7 @@ def SolvePotential(densityField, greensFunction):
 
 def ConvertPotentialToForce(potentialField, gridResolution):
 	volume = potentialField.shape
-	forceField = np.zeros((volume, 3))
+	forceField = np.zeros((volume[0], volume[1], volume[2], 3))
 
 	for i in range(0, volume[0]):
 		for j in range(0, volume[1]):
@@ -154,7 +154,9 @@ def CalculateParticleAcceleration(particle, forceField):
 	yMesh = int(particle.position[1] / gridResolution)
 	zMesh = int(particle.position[2] / gridResolution)
 
-	particleAcceleration = (forceField[xMesh][yMesh][zMesh][0], forceField[xMesh][yMesh][zMesh][1], forceField[xMesh][yMesh][zMesh][2]) / particle.mass
+	particleAcceleration = ((velocity / particle.mass) for velocity in forceField[xMesh][yMesh][zMesh])
+	print particleAcceleration
+	#particleAcceleration = (forceField[xMesh][yMesh][zMesh][0], forceField[xMesh][yMesh][zMesh][1], forceField[xMesh][yMesh][zMesh][2]) / particle.mass
 	return particleAcceleration
 
 start = time.time()
@@ -177,7 +179,7 @@ if hasCenterParticle:
 	centreParticle = Particle([100., 100., 100.], [0., 0., 0.,], 20)
 	particleList.append(centreParticle)
 	numParticles += 1
-print "Done\n"
+print"Done\n"
 
 timeStepSize = 0.01
 numTimeSteps = 1000
