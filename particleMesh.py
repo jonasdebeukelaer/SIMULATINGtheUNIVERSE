@@ -139,33 +139,20 @@ def SolvePotential(densityField, greensFunction):
 	densityFieldConvoluted = densityFieldFFT() * greensFunction
 	potentialFieldJumbled = pyfftw.builders.irfftn(densityFieldConvoluted)
 	potentialField = np.fft.fftshift(potentialFieldJumbled())
-	return potentialField
+	return potentialFieldJumbled()
 
-def ConvertPotentialToForce(potentialField, gridResolution):
-	volume = potentialField.shape
-	forceField = np.zeros((volume[0], volume[1], volume[2], 3))
+def CalculateParticleAcceleration(particle, potentialField, gridResolution):
+	meshShape = potentialField.shape
 
-	for i in range(0, volume[0]):
-		for j in range(0, volume[1]):
-			for k in range(0, volume[2]):
-				if i != 0 and i != (volume[0] - 1) and j != 0 and j != (volume[1] - 1) and k != 0 and k != (volume[2] - 1):
-					xForce = - (potentialField[i+1][j][k] - potentialField[i-1][j][k]) / (2 * gridResolution)
-					yForce = - (potentialField[i][j+1][k] - potentialField[i][j-1][k]) / (2 * gridResolution)
-					zForce = - (potentialField[i][j][k+1] - potentialField[i][j][k-1]) / (2 * gridResolution)
+	xMesh = FindMeshIndex(particle.position[0], gridResolution, meshShape[0])
+	yMesh = FindMeshIndex(particle.position[1], gridResolution, meshShape[1])
+	zMesh = FindMeshIndex(particle.position[2], gridResolution, meshShape[2])
 
-					forceField[i][j][k][0] = xForce
-					forceField[i][j][k][1] = yForce
-					forceField[i][j][k][2] = zForce
+	xAcceleration = - (potentialField[xMesh + 1][yMesh][zMesh] - potentialField[xMesh - 1][yMesh][zMesh]) / 2.0
+	yAcceleration = - (potentialField[xMesh][yMesh + 1][zMesh] - potentialField[xMesh][yMesh - 1][zMesh]) / 2.0
+	zAcceleration = - (potentialField[xMesh][yMesh][zMesh + 1] - potentialField[xMesh][yMesh][zMesh - 1]) / 2.0
 
-	return forceField
-
-def CalculateParticleAcceleration(particle, forceField):
-	xMesh = int(particle.position[0] / gridResolution)
-	yMesh = int(particle.position[1] / gridResolution)
-	zMesh = int(particle.position[2] / gridResolution)
-
-	particleAcceleration = (forceField[xMesh][yMesh][zMesh][0]/particle.mass, forceField[xMesh][yMesh][zMesh][1]/particle.mass, forceField[xMesh][yMesh][zMesh][2]/particle.mass)
-	return particleAcceleration
+	return (xAcceleration, yAcceleration, zAcceleration)
 
 start = time.time()
 print "Seeding..."
@@ -184,20 +171,13 @@ hasCenterParticle = False
 print "Initialising particles..."
 particleList = InitialiseParticles(numParticles, initialisationResolution, randomMaxCoordinates, maxVelocity, positionDistribution, velocityDistribution)
 if hasCenterParticle:
-	centreParticle = Particle([100., 100., 100.], [0., 0., 0.,], 20)
+	centreParticle = Particle([0., 0., 0.], [0., 0., 0.,], 20)
 	particleList.append(centreParticle)
 	numParticles += 1
-
-particleFile = open("PotentialInvestigation0.3D", 'w')
-particleFile.write("x\ty\tz\tValue\n")
-particleFile.write("50\t50\t50\t0\n-50\t-50\t-50\t0\n")
-for particle in particleList:
-	particleFile.write("%f\t%f\t%f\t%f\n" % (particle.position[0], particle.position[1], particle.position[2], particle.mass))
-particleFile.close()
 print"Done\n"
 
 timeStepSize = 0.01
-numTimeSteps = 1
+numTimeSteps = 10000
 shootEvery = 100
 
 volume = [100, 100, 100]
@@ -214,69 +194,38 @@ print "Done\n"
 print "Iterating..."
 for timeStep in range(0, numTimeSteps):
 	#time += timeStepSize
-	#shoot = True if (timeStep % shootEvery) == 0 else False
+	shoot = True if (timeStep % shootEvery) == 0 else False
 
 	#percentage counter
 	i = (float(timeStep) / numTimeSteps) * 100
 	sys.stdout.write("\r%.2f%%" % i)
 	sys.stdout.flush()
 
-	#if shoot:
-		#f = open("Results/values_frame%d.3D" % (timeStep), "w")
-		#f.write("x y z VelocityMagnitude\n")
+	if shoot:
+		f = open("Results/values_frame%d.3D" % (timeStep), "w")
+		f.write("x y z VelocityMagnitude\n")
 
 	densityField   = CalculateDensityField(volume, gridResolution, particleList)
-	densityFile = open("PotentialInvestigation1.3D", 'w')
-	densityFile.write("x\ty\tz\tValue\n")
-	densityFile.write("50\t50\t50\t0\n-50\t-50\t-50\t0\n")
-	densityShape = densityField.shape
-	for i in range(0, densityShape[0]):
-		x = (i - ((densityShape[0] / 2) - 1)) * gridResolution
-		for j in range(0, densityShape[1]):
-			y = (j - ((densityShape[1] / 2) - 1)) * gridResolution
-			for k in range(0, densityShape[2]):
-				z = (k - ((densityShape[2] / 2) - 1)) * gridResolution
-				if densityField[i][j][k] != 0:
-					densityFile.write("%f\t%f\t%f\t%f\n" % (x, y, z, densityField[i][j][k]))
-	densityFile.close()
-
 	potentialField = SolvePotential(densityField, greensFunction)
-	potentialFile = open("PotentialInvestigation2.3D", 'w')
-	potentialFile.write("x\ty\tz\tValue\n")
-	potentialFile.write("50\t50\t50\t0\n-50\t-50\t-50\t0\n")
-	potentialShape = potentialField.shape
-	if potentialShape != densityShape:
-		sys.exit("Error: something definitely went wrong")
-	for i in range(0, potentialShape[0]):
-		x = (i - ((potentialShape[0] / 2) - 1)) * gridResolution
-		for j in range(0, potentialShape[1]):
-			y = (j - ((potentialShape[1] / 2) - 1)) * gridResolution
-			for k in range(0, potentialShape[2]):
-				z = (k - ((potentialShape[2] / 2) - 1)) * gridResolution
-				if potentialField[i][j][k] != 0:
-					potentialFile.write("%f\t%f\t%f\t%f\n" % (x, y, z, potentialField[i][j][k]))
-	potentialFile.close()
 
-	#forceField     = ConvertPotentialToForce(potentialField, gridResolution)
+	for particle in particleList:
 
-	#for particle in particleList:
-
-		#particleAcceleration = CalculateParticleAcceleration(particle, forceField)
+		particleAcceleration = CalculateParticleAcceleration(particle, potentialField, gridResolution)
 		
-		#if timeStep == 0:
-			#particle.acceleration = particleAcceleration
+		if timeStep == 0:
+			particle.acceleration = particleAcceleration
 
-		#particle.position += np.multiply(timeStepSize, particle.velocity) + np.multiply(0.5 * timeStepSize**2, particle.acceleration)
-		#particle.velocity += np.multiply((0.5 * timeStepSize), (np.add(particle.acceleration, particleAcceleration)))
-		#velocityMagnitude = ((particle.velocity[0])**2 + (particle.velocity[1])**2 + (particle.velocity[2])**2)
-		#particle.acceleration = particleAcceleration
+		particle.position += np.multiply(timeStepSize, particle.velocity) + np.multiply(0.5 * timeStepSize**2, particle.acceleration)
+		particle.velocity += np.multiply((0.5 * timeStepSize), (np.add(particle.acceleration, particleAcceleration)))
+		velocityMagnitude = ((particle.velocity[0])**2 + (particle.velocity[1])**2 + (particle.velocity[2])**2)
+		particle.acceleration = particleAcceleration
 
-		#if shoot:
-			#f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], velocityMagnitude))
+		if shoot:
+			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], velocityMagnitude))
 
-	#if shoot:
-		#f.write("%f %f %f %f\n%f %f %f %f\n" % (maxCoordinate, maxCoordinate, maxCoordinate, 0., -maxCoordinate, -maxCoordinate, -maxCoordinate, 0.))
-		#f.close()
+	if shoot:
+		f.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 0., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 0.))
+		f.close()
 
 end = time.time()
 sys.stdout.write("\n")
