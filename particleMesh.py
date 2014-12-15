@@ -105,6 +105,20 @@ def CalculateDensityField(volume, gridResolution, particleList, populateArray = 
 
 	return densityFieldMesh
 
+def ReadGreensFunction(size):
+	print "Nonsense"
+
+def WriteGreensFunction(greensFunction, size):
+	f = open("Greens/greens%d.txt" % (size))
+	shape = greensFunction.shape
+
+	for i in range(0, shape[0]):
+		for j in range(0, shape[1]):
+			for k in range(0, shape[2]):
+				print "Nonsense"
+
+	f.close()
+
 def CreateGreensFunction(unalteredShape):
 	shape = (unalteredShape[0], unalteredShape[1], (unalteredShape[2] / 2) + 1)
 	greensArray = np.zeros((shape))
@@ -139,7 +153,7 @@ def SolvePotential(densityField, greensFunction):
 	densityFieldConvoluted = densityFieldFFT() * greensFunction
 	potentialFieldJumbled = pyfftw.builders.irfftn(densityFieldConvoluted)
 	potentialField = np.fft.fftshift(potentialFieldJumbled())
-	return potentialFieldJumbled()
+	return potentialField
 
 def CalculateParticleAcceleration(particle, potentialField, gridResolution):
 	meshShape = potentialField.shape
@@ -164,7 +178,7 @@ initialisationResolution = 0.1
 maxCoordinate = 25
 randomMaxCoordinates = maxCoordinate / initialisationResolution
 maxVelocity = 1
-positionDistribution = 0
+positionDistribution = 2
 velocityDistribution = 1
 hasCenterParticle = False
 
@@ -216,7 +230,7 @@ for timeStep in range(0, numTimeSteps):
 			particle.acceleration = particleAcceleration
 
 		particle.position += np.multiply(timeStepSize, particle.velocity) + np.multiply(0.5 * timeStepSize**2, particle.acceleration)
-		particle.velocity += np.multiply((0.5 * timeStepSize), (np.add(particle.acceleration, particleAcceleration)))
+		particle.velocity -= np.multiply((0.5 * timeStepSize), (np.add(particle.acceleration, particleAcceleration))) # THIS IS UBER WRONG
 		velocityMagnitude = ((particle.velocity[0])**2 + (particle.velocity[1])**2 + (particle.velocity[2])**2)
 		particle.acceleration = particleAcceleration
 
