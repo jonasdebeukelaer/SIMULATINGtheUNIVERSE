@@ -165,11 +165,11 @@ def SolvePotential(densityField, greensFunction, shoot, timeStep, outputFourierS
 
 def OutputFourierSpaceTo3D(densityFieldConvoluted, timeStep):
 	fourierFile = open('fourierResults/convolutedFourierSpace_%s.3D' % timeStep, 'w')
-	fourierFile.write("x y z VelocityMagnitude\n")
+	fourierFile.write("x y z mag\n")
 	for kx in range(0, len(densityFieldConvoluted[:][1][1])):
 		for ky in range(0, len(densityFieldConvoluted[1][:][1])):
 			for kz in range(0, len(densityFieldConvoluted[1][1][:])):
-				if densityFieldConvoluted[kx][ky][kz] > 0.9:
+				if densityFieldConvoluted[kx][ky][kz] > 0.01:
 					fourierFile.write("%d %d %d %f\n" % (kx, ky, kz, math.log(densityFieldConvoluted[kx][ky][kz])))
 
 	fourierFile.close()
@@ -192,7 +192,7 @@ print "Seeding..."
 random.seed(89321)
 print "Done\n"
 
-numParticles = 20
+numParticles = 100
 initialisationResolution = 0.1
 maxCoordinate = 25
 randomMaxCoordinates = maxCoordinate / initialisationResolution
@@ -212,7 +212,7 @@ print"Done\n"
 
 timeStepSize = 0.01
 
-numTimeSteps = 1
+numTimeSteps = 8000
 shootEvery = 200
 
 volume = [100, 100, 100]
@@ -269,7 +269,7 @@ end = time.time()
 sys.stdout.write("\n")
 print end - start
 
-Notifier.notify('The universe has been solved', title = 'Thanks to the finest minds of the 21st century...')
+Notifier.notify('The universe has been solved', title = 'Thanks to the finest minds of the 21st century...', excecute="dismiss")
 
 
 
