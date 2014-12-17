@@ -150,12 +150,29 @@ def CreateGreensFunction(unalteredShape):
 
 	return greensArray
 
-def SolvePotential(densityField, greensFunction):
+def SolvePotential(densityField, greensFunction, shoot, timeStep, outputFourierSpace=False):
 	densityFieldFFT = pyfftw.builders.rfftn(densityField)
 	densityFieldConvoluted = densityFieldFFT() * greensFunction
+
+	if outputFourierSpace and shoot:
+		#shiftedConvolution = np.fft.fftshift(densityFieldConvoluted)
+		OutputFourierSpaceTo3D(densityFieldConvoluted, timeStep)
+	
 	potentialFieldJumbled = pyfftw.builders.irfftn(densityFieldConvoluted)
+	
 	potentialField = np.fft.fftshift(potentialFieldJumbled())
 	return potentialField
+
+def OutputFourierSpaceTo3D(densityFieldConvoluted, timeStep):
+	fourierFile = open('fourierResults/convolutedFourierSpace_%s.3D' % timeStep, 'w')
+	fourierFile.write("x y z VelocityMagnitude\n")
+	for kx in range(0, len(densityFieldConvoluted[:][1][1])):
+		for ky in range(0, len(densityFieldConvoluted[1][:][1])):
+			for kz in range(0, len(densityFieldConvoluted[1][1][:])):
+				if densityFieldConvoluted[kx][ky][kz] > 0.9:
+					fourierFile.write("%d %d %d %f\n" % (kx, ky, kz, math.log(densityFieldConvoluted[kx][ky][kz])))
+
+	fourierFile.close()
 
 def CalculateParticleAcceleration(particle, potentialField, gridResolution):
 	meshShape = potentialField.shape
@@ -175,7 +192,7 @@ print "Seeding..."
 random.seed(89321)
 print "Done\n"
 
-numParticles = 100
+numParticles = 20
 initialisationResolution = 0.1
 maxCoordinate = 25
 randomMaxCoordinates = maxCoordinate / initialisationResolution
@@ -183,6 +200,7 @@ maxVelocity = 1
 positionDistribution = 2
 velocityDistribution = 1
 hasCenterParticle = False
+printFourierSpace = True
 
 print "Initialising particles..."
 particleList = InitialiseParticles(numParticles, initialisationResolution, randomMaxCoordinates, maxVelocity, positionDistribution, velocityDistribution)
@@ -193,8 +211,9 @@ if hasCenterParticle:
 print"Done\n"
 
 timeStepSize = 0.01
-numTimeSteps = 100
-shootEvery = 100
+
+numTimeSteps = 1
+shootEvery = 200
 
 volume = [100, 100, 100]
 gridResolution = 1
@@ -226,7 +245,7 @@ while timeStep < numTimeSteps:
 		f.write("x y z VelocityMagnitude\n")
 
 	densityField   = CalculateDensityField(volume, gridResolution, particleList)
-	potentialField = SolvePotential(densityField, greensFunction)
+	potentialField = SolvePotential(densityField, greensFunction, shoot, timeStep, printFourierSpace)
 
 	for particle in particleList:
 
