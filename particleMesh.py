@@ -1,9 +1,11 @@
 import numpy as np
 import math
+import os
 import sys
 import random
 import time
 import pyfftw
+from pync import Notifier
 
 G = 1
 
@@ -138,10 +140,10 @@ def CreateGreensFunction(unalteredShape):
 				ky = 2 * math.pi * (m - shape[1]) / (shape[1] - 1)
 
 			for n in range(0, shape[2]):
-				if n <= shape[2] / 2:
-					kz = 2 * math.pi * n / (shape[2] - 1)
-				else:
-					kz = 2 * math.pi * (n - shape[2]) / (shape[2] - 1)
+				#if n <= shape[2] / 2:
+				kz = math.pi * n / (shape[2] - 1)
+				#else:
+					#kz = math.pi * (n - shape[2]) / (shape[2] - 1)
 
 				if l != 0 or m != 0 or n != 0:
 					greensArray[l][m][n] = - constant / ((math.sin(kx * 0.5))**2 + (math.sin(ky * 0.5))**2 + (math.sin(kz * 0.5))**2)
@@ -191,7 +193,7 @@ if hasCenterParticle:
 print"Done\n"
 
 timeStepSize = 0.01
-numTimeSteps = 10000
+numTimeSteps = 100
 shootEvery = 100
 
 volume = [100, 100, 100]
@@ -204,6 +206,9 @@ print "Done\n"
 print "Calculating Green's function..."
 greensFunction = CreateGreensFunction(densityField.shape)
 print "Done\n"
+
+if os.path.exists("Results/values_frame0.3D"):
+	raw_input("Delete yo motherflippin results from the last test, you simpleton! Or, if you're really sure, just hit enter I guess...\n")
 
 print "Iterating..."
 for timeStep in range(0, numTimeSteps):
@@ -244,6 +249,9 @@ for timeStep in range(0, numTimeSteps):
 end = time.time()
 sys.stdout.write("\n")
 print end - start
+
+Notifier.notify('The universe has been solved', title = 'Thanks to the finest minds of the 21st century...')
+
 
 
 
