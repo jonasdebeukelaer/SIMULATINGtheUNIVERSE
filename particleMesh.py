@@ -208,15 +208,16 @@ greensFunction = CreateGreensFunction(densityField.shape)
 print "Done\n"
 
 if os.path.exists("Results/values_frame0.3D"):
-	raw_input("Delete yo motherflippin results from the last test, you simpleton! Or, if you're really sure, just hit enter I guess...\n")
+	raw_input("Delete yo motherflippin results from the last test, you simpleton! Or, if you'rereally sure, just hit enter I guess...\n")
 
 print "Iterating..."
-for timeStep in range(0, numTimeSteps):
+timeStep = 0
+while timeStep < numTimeSteps:
 	#time += timeStepSize
 	shoot = True if (timeStep % shootEvery) == 0 else False
 
 	#percentage counter
-	i = (float(timeStep) / numTimeSteps) * 100
+	i = (float(timeStep + 1) / numTimeSteps) * 100
 	sys.stdout.write("\r%.2f%%" % i)
 	sys.stdout.flush()
 
@@ -246,11 +247,21 @@ for timeStep in range(0, numTimeSteps):
 		f.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 0., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 0.))
 		f.close()
 
+	timeStep += 1
+
+	if timeStep == numTimeSteps:
+		Notifier.notify('%d time steps complete' % (numTimeSteps), title = 'User input required')
+		moreSteps = raw_input("\n\nPlease check your VisIt output... would you like to add more time steps         (currently %d run)? (y/n): " % (numTimeSteps))
+		if moreSteps == 'y':
+			extraSteps = int(raw_input("\nInput desired number of extra steps: "))
+			sys.stdout.write("\n")
+			numTimeSteps += extraSteps
+
 end = time.time()
 sys.stdout.write("\n")
-print end - start
+sys.stdout.write("%f\n\n" % (end - start))
 
-Notifier.notify('The universe has been solved', title = 'Thanks to the finest minds of the 21st century...')
+Notifier.notify('Version Date: 17.12.14', title = 'The universe has been solved!')
 
 
 
