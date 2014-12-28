@@ -150,13 +150,13 @@ def CreateGreensFunction(unalteredShape):
 
 	return greensArray
 
-def SolvePotential(densityField, greensFunction, shoot, timeStep, outputFourierSpace=False):
+def SolvePotential(densityField, greensFunction, shoot, timeStep): #, outputFourierSpace=False):
 	densityFieldFFT = pyfftw.builders.rfftn(densityField)
 	densityFieldConvoluted = densityFieldFFT() * greensFunction
 
-	if outputFourierSpace and shoot:
+	#if outputFourierSpace and shoot:
 		#shiftedConvolution = np.fft.fftshift(densityFieldConvoluted)
-		OutputFourierSpaceTo3D(densityFieldConvoluted, timeStep)
+		#OutputFourierSpaceTo3D(densityFieldConvoluted, timeStep)
 	
 	potentialFieldJumbled = pyfftw.builders.irfftn(densityFieldConvoluted)
 	
@@ -192,15 +192,15 @@ print "Seeding..."
 random.seed(89321)
 print "Done\n"
 
-numParticles = 20
+numParticles = 500
 initialisationResolution = 0.1
 maxCoordinate = 25
 randomMaxCoordinates = maxCoordinate / initialisationResolution
 maxVelocity = 1
-positionDistribution = 2
+positionDistribution = 0
 velocityDistribution = 1
 hasCenterParticle = False
-printFourierSpace = True
+#printFourierSpace = True
 
 print "Initialising particles..."
 particleList = InitialiseParticles(numParticles, initialisationResolution, randomMaxCoordinates, maxVelocity, positionDistribution, velocityDistribution)
@@ -212,8 +212,8 @@ print"Done\n"
 
 timeStepSize = 0.01
 
-numTimeSteps = 1
-shootEvery = 200
+numTimeSteps = 100
+shootEvery = 100
 
 volume = [100, 100, 100]
 gridResolution = 1
@@ -245,7 +245,7 @@ while timeStep < numTimeSteps:
 		f.write("x y z VelocityMagnitude\n")
 
 	densityField   = CalculateDensityField(volume, gridResolution, particleList)
-	potentialField = SolvePotential(densityField, greensFunction, shoot, timeStep, printFourierSpace)
+	potentialField = SolvePotential(densityField, greensFunction, shoot, timeStep)
 
 	for particle in particleList:
 
