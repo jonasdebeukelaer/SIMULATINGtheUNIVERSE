@@ -20,11 +20,11 @@ volume                   = [100, 100, 100]
 initialisationResolution = 0.1
 gridResolution           = 1
 
-numParticles             = 100
+numParticles             = 0
 positionDistribution     = 0
 velocityDistribution     = 1
 maxVelocity              = 1
-hasCenterParticle        = False
+hasCenterParticle        = True
 
 numTimeSteps             = 1000
 timeStepSize             = 0.01
@@ -35,9 +35,10 @@ shootEvery               = 100
 #------------INITIALISATION FUNCTIONS------------#
 
 print "Initialising particles..."
-particleList = pm.InitialiseParticles(volume, initialisationResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity)
+# particleList = pm.InitialiseParticles(volume, initialisationResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity)
+particleList = []
 if hasCenterParticle:
-	centreParticle = pm.Particle([0., 0., 0.], [0., 0., 0.,], 20)
+	centreParticle = pm.Particle([0., 0., 0.], [2., 0., 0.,], 20)
 	particleList.append(centreParticle)
 	numParticles += 1
 print"Done\n"
@@ -78,6 +79,7 @@ while timeStep < numTimeSteps:
 			particle.acceleration = particleAcceleration
 
 		particle.position     += np.multiply(timeStepSize, particle.velocity) + np.multiply(0.5 * timeStepSize**2, particle.acceleration)
+		pm.PositionCorrect(particle, volume)
 		particle.velocity     -= np.multiply((0.5 * timeStepSize), (np.add(particle.acceleration, particleAcceleration))) # THIS IS UBER WRONG
 		velocityMagnitude     =  ((particle.velocity[0])**2 + (particle.velocity[1])**2 + (particle.velocity[2])**2)
 		particle.acceleration =  particleAcceleration

@@ -84,8 +84,11 @@ def InitialiseParticles(volume, initialisationResolution, numParticles, position
 
 	return particleList
 
-def FindMeshIndex(position, gridResolution, gridSize): 
-	return round((position / gridResolution) + (gridResolution / 2)) + ((gridSize / 2) - 1)
+def FindMeshIndex(position, gridResolution, gridSize):
+	index = round((position / gridResolution) + (gridResolution / 2)) + ((gridSize / 2) - 1)
+	if index == -1:
+		index = gridSize - 1
+	return index
 
 def CalculateDensityField(volume, gridResolution, particleList, populateArray = True):
 	meshShape = [volume[0] / gridResolution, volume[1] / gridResolution, volume[2] / gridResolution]
@@ -133,11 +136,24 @@ def CreateGreensFunction(unalteredShape):
 	return greensArray
 
 def SolvePotential(densityField, greensFunction, timeStep):
-	densityFieldFFT = pyfftw.builders.rfftn(densityField)
+	densityFieldFFT        = pyfftw.builders.rfftn(densityField)
 	densityFieldConvoluted = densityFieldFFT() * greensFunction
-	potentialFieldJumbled = pyfftw.builders.irfftn(densityFieldConvoluted)
-	potentialField = np.fft.fftshift(potentialFieldJumbled())
+	potentialFieldJumbled  = pyfftw.builders.irfftn(densityFieldConvoluted)
+	potentialField         = np.fft.fftshift(potentialFieldJumbled())
 	return potentialField
+
+def FindPlusMinus(meshIndex, axisSize):
+	if meshIndex == 0:
+		meshPlus  = meshIndex + 1
+		meshMinus = axisSize - 1
+	elif meshIndex == axisSize - 1:
+		meshPlus  = 0
+		meshMinus = meshIndex - 1
+	else:
+		meshPlus  = meshIndex + 1
+		meshMinus = meshIndex - 1
+
+	return (meshPlus, meshMinus)
 
 def CalculateParticleAcceleration(particle, potentialField, gridResolution):
 	meshShape = potentialField.shape
@@ -146,11 +162,23 @@ def CalculateParticleAcceleration(particle, potentialField, gridResolution):
 	yMesh = FindMeshIndex(particle.position[1], gridResolution, meshShape[1])
 	zMesh = FindMeshIndex(particle.position[2], gridResolution, meshShape[2])
 
-	xAcceleration = - (potentialField[xMesh + 1][yMesh][zMesh] - potentialField[xMesh - 1][yMesh][zMesh]) / 2.0
-	yAcceleration = - (potentialField[xMesh][yMesh + 1][zMesh] - potentialField[xMesh][yMesh - 1][zMesh]) / 2.0
-	zAcceleration = - (potentialField[xMesh][yMesh][zMesh + 1] - potentialField[xMesh][yMesh][zMesh - 1]) / 2.0
+	xNeighbours = FindPlusMinus(xMesh, meshShape[0])
+	yNeighbours = FindPlusMinus(yMesh, meshShape[1])
+	zNeighbours = FindPlusMinus(zMesh, meshShape[2])
+
+	xAcceleration = - (potentialField[xNeighbours[0]][yMesh][zMesh] - potentialField[xNeighbours[1]][yMesh][zMesh]) / 2.0
+	yAcceleration = - (potentialField[xMesh][yNeighbours[0]][zMesh] - potentialField[xMesh][yNeighbours[1]][zMesh]) / 2.0
+	zAcceleration = - (potentialField[xMesh][yMesh][zNeighbours[0]] - potentialField[xMesh][yMesh][zNeighbours[1]]) / 2.0
 
 	return (xAcceleration, yAcceleration, zAcceleration)
+
+def PositionCorrect(particle, volumeLimits):
+	positionLimits = np.array(volumeLimits) / 2
+	for index, position in enumerate(particle.position):
+		if position > positionLimits[index]:
+			particle.position[index] = position - volumeLimits[index]
+		elif position < (- positionLimits[index]):
+			particle.position[index] = position + volumeLimits[index]
 
 def OutputPercentage(timeStep, numTimeSteps):
 	i = (float(timeStep + 1) / numTimeSteps) * 100
