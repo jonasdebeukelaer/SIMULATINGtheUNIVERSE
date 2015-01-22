@@ -139,7 +139,7 @@ def GetNumberOfThreads():
 	user = os.login()
 	if user == "oliclipsham":
 		threads = 8
-	else if user == "jonasdebeukelaer":
+	elif user == "jonasdebeukelaer":
 		threads = 4
 	else:
 		print "Imposter!"
