@@ -16,17 +16,17 @@ print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-volume                   = [100, 100, 100]
-initialisationResolution = 0.1
-gridResolution           = 1
+volume                   = [100, 100, 2]
+initialisationResolution = 1
+gridResolution           = 0.5
 
-numParticles             = 0
+numParticles             = 1
 positionDistribution     = 0
-velocityDistribution     = 1
+velocityDistribution     = 0
 maxVelocity              = 1
 hasCenterParticle        = True
 
-numTimeSteps             = 1000
+numTimeSteps             = 10000
 timeStepSize             = 0.01
 shootEvery               = 100
 
@@ -35,10 +35,12 @@ shootEvery               = 100
 #------------INITIALISATION FUNCTIONS------------#
 
 print "Initialising particles..."
-# particleList = pm.InitialiseParticles(volume, initialisationResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity)
+#particleList = pm.InitialiseParticles(volume, initialisationResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity)
 particleList = []
+particle1 = pm.Particle([25, 0., 0.], [0.,2.2, 0.], 1)
+particleList.append(particle1)
 if hasCenterParticle:
-	centreParticle = pm.Particle([0., 0., 0.], [2., 0., 0.,], 20)
+	centreParticle = pm.Particle([0., 0., 0.], [0., 0., 0.,], 30)
 	particleList.append(centreParticle)
 	numParticles += 1
 print"Done\n"
@@ -72,18 +74,22 @@ while timeStep < numTimeSteps:
 	densityField   = pm.CalculateDensityField(volume, gridResolution, particleList)
 	potentialField = pm.SolvePotential(densityField, greensFunction, timeStep)
 
-	for particle in particleList:
+	for index, particle in enumerate(particleList):
 
 		particleAcceleration = pm.CalculateParticleAcceleration(particle, potentialField, gridResolution)
 		if timeStep == 0:
 			particle.acceleration = particleAcceleration
 
 		particle.position     += np.multiply(timeStepSize, particle.velocity) + np.multiply(0.5 * timeStepSize**2, particle.acceleration)
-		pm.PositionCorrect(particle, volume)
+		#pm.PositionCorrect(particle, volume)
 		particle.velocity     -= np.multiply((0.5 * timeStepSize), (np.add(particle.acceleration, particleAcceleration))) # THIS IS UBER WRONG
-		velocityMagnitude     =  ((particle.velocity[0])**2 + (particle.velocity[1])**2 + (particle.velocity[2])**2)
+		#velocityMagnitude     =  ((particle.velocity[0])**2 + (particle.velocity[1])**2 + (particle.velocity[2])**2)
+		velocityMagnitude      =  ((particle.position[0])**2 + (particle.position[1])**2 + (particle.position[2])**2)
 		particle.acceleration =  particleAcceleration
 
+		if index == 1:
+			particle.position = [0, 0, 0]
+			particle.velocity = [0, 0, 0]
 		if shoot:
 			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], velocityMagnitude))
 

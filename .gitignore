@@ -10,3 +10,6 @@ lena_bw.bmp
 pic_archive/
 Smoosh.bmp
 gaussianSmoothedResults/
+fourierResults/
+greensFunction.3D
+pmHeader.pyc

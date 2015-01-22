@@ -86,8 +86,8 @@ def InitialiseParticles(volume, initialisationResolution, numParticles, position
 
 def FindMeshIndex(position, gridResolution, gridSize):
 	index = round((position / gridResolution) + (gridResolution / 2)) + ((gridSize / 2) - 1)
-	if index == -1:
-		index = gridSize - 1
+	#if index == -1:
+	#	index = gridSize - 1
 	return index
 
 def CalculateDensityField(volume, gridResolution, particleList, populateArray = True):
@@ -136,9 +136,9 @@ def CreateGreensFunction(unalteredShape):
 	return greensArray
 
 def SolvePotential(densityField, greensFunction, timeStep):
-	densityFieldFFT        = pyfftw.builders.rfftn(densityField)
+	densityFieldFFT        = pyfftw.builders.rfftn(densityField, threads=3)
 	densityFieldConvoluted = densityFieldFFT() * greensFunction
-	potentialFieldJumbled  = pyfftw.builders.irfftn(densityFieldConvoluted)
+	potentialFieldJumbled  = pyfftw.builders.irfftn(densityFieldConvoluted, threads=3)
 	potentialField         = np.fft.fftshift(potentialFieldJumbled())
 	return potentialField
 
