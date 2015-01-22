@@ -23,12 +23,13 @@ gridResolution           = 0.5
 numParticles             = 1
 positionDistribution     = 0
 velocityDistribution     = 0
-maxVelocity              = 1
-hasCenterParticle        = True
 
-numTimeSteps             = 10000
+maxVelocity              = 1
+hasCenterParticle        = False
+
+numTimeSteps             = 10
 timeStepSize             = 0.01
-shootEvery               = 100
+shootEvery               = 50
 
 #------------------------------------------------#
 

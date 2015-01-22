@@ -46,7 +46,7 @@ def InitialiseParticles(volume, initialisationResolution, numParticles, position
 
 	# Even shell of particles distribution
 	elif positionDistribution == 2:
-		r            = min([volume[0] / 2, volume[1] / 2, volume[2] / 2])
+		r            = min([volume[0] / 4, volume[1] / 4, volume[2] / 4])
 		
 		golden_angle = np.pi * (3 - np.sqrt(5))
 		theta        = golden_angle * np.arange(numParticles)
