@@ -135,10 +135,22 @@ def CreateGreensFunction(unalteredShape):
 
 	return greensArray
 
+def GetNumberOfThreads():
+	user = os.login()
+	if user == "oliclipsham":
+		threads = 8
+	else if user == "jonasdebeukelaer":
+		threads = 4
+	else:
+		print "Imposter!"
+		threads = 0
+
+	return threads
+
 def SolvePotential(densityField, greensFunction, timeStep):
-	densityFieldFFT        = pyfftw.builders.rfftn(densityField, threads=3)
+	densityFieldFFT        = pyfftw.builders.rfftn(densityField, threads = GetNumberOfThreads())
 	densityFieldConvoluted = densityFieldFFT() * greensFunction
-	potentialFieldJumbled  = pyfftw.builders.irfftn(densityFieldConvoluted, threads=3)
+	potentialFieldJumbled  = pyfftw.builders.irfftn(densityFieldConvoluted, threads = GetNumberOfThreads())
 	potentialField         = np.fft.fftshift(potentialFieldJumbled())
 	return potentialField
 
