@@ -20,25 +20,24 @@ volume                   = [100, 100, 100]
 initialisationResolution = 0.1
 gridResolution           = 1
 
-numParticles             = 0
-positionDistribution     = 0
+numParticles             = 500
+positionDistribution     = 2
 velocityDistribution     = 1
 maxVelocity              = 1
-hasCenterParticle        = True
+hasCenterParticle        = False
 
-numTimeSteps             = 1000
+numTimeSteps             = 10
 timeStepSize             = 0.01
-shootEvery               = 100
+shootEvery               = 50
 
 #------------------------------------------------#
 
 #------------INITIALISATION FUNCTIONS------------#
 
 print "Initialising particles..."
-# particleList = pm.InitialiseParticles(volume, initialisationResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity)
-particleList = []
+particleList = pm.InitialiseParticles(volume, initialisationResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity)
 if hasCenterParticle:
-	centreParticle = pm.Particle([0., 0., 0.], [2., 0., 0.,], 20)
+	centreParticle = pm.Particle([0., 0., 0.], [0., 0., 0.,], 20)
 	particleList.append(centreParticle)
 	numParticles += 1
 print"Done\n"
