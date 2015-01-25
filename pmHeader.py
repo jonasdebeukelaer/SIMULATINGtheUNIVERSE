@@ -6,6 +6,7 @@ import random
 import time
 import pyfftw
 from pync import Notifier
+from enum import Enum
 
 G = 1
 
@@ -16,6 +17,17 @@ class Particle:
 		self.mass         = mass
 		self.acceleration = [0.0, 0.0, 0.0]
 
+class PositionDist(Enum):
+	random       = 1
+	randomShell  = 2
+	evenShell    = 3
+	correctField = 4
+
+class VelocityDist(Enum):
+	random       = 1
+	zero         = 2
+	correctField = 3
+
 def InitialiseParticles(volume, initialisationResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity):
 	particleList = []
 	
@@ -24,7 +36,7 @@ def InitialiseParticles(volume, initialisationResolution, numParticles, position
 		particleList.append(newParticle)
 
 	# Random coordinates distribution
-	if positionDistribution == 0:
+	if positionDistribution == PositionDist.random:
 		for particle in particleList:
 			x                 = random.randrange((- volume[0] / 2) / initialisationResolution, (volume[0] / 2) / initialisationResolution) * initialisationResolution
 			y                 = random.randrange((- volume[1] / 2) / initialisationResolution, (volume[1] / 2) / initialisationResolution) * initialisationResolution
@@ -32,7 +44,7 @@ def InitialiseParticles(volume, initialisationResolution, numParticles, position
 			particle.position = [x, y, z]
 
 	# Random shell of particles distribution
-	elif positionDistribution == 1:
+	elif positionDistribution == PositionDist.randomShell:
 		r = min([volume[0] / 2, volume[1] / 2, volume[2] / 2])
 		for particle in particleList:
 			theta = math.acos(random.uniform(-1., 1.))
@@ -45,7 +57,7 @@ def InitialiseParticles(volume, initialisationResolution, numParticles, position
 			particle.position = [x, y, z]
 
 	# Even shell of particles distribution
-	elif positionDistribution == 2:
+	elif positionDistribution == PositionDist.evenShell:
 		r            = min([volume[0] / 4, volume[1] / 4, volume[2] / 4])
 		
 		golden_angle = np.pi * (3 - np.sqrt(5))
@@ -67,7 +79,7 @@ def InitialiseParticles(volume, initialisationResolution, numParticles, position
 		print 'Invalid position distribution selected'
 
 	# Random velocity distribution
-	if velocityDistribution == 0:
+	if velocityDistribution == VelocityDist.random:
 		for particle in particleList:
 			xVelocity         = random.randrange(- maxVelocity / initialisationResolution, maxVelocity / initialisationResolution) * initialisationResolution
 			yVelocity         = random.randrange(- maxVelocity / initialisationResolution, maxVelocity / initialisationResolution) * initialisationResolution
@@ -75,7 +87,7 @@ def InitialiseParticles(volume, initialisationResolution, numParticles, position
 			particle.velocity = [xVelocity, yVelocity, zVelocity]
 
 	# Zero velocity distribution
-	elif velocityDistribution == 1:
+	elif velocityDistribution == VelocityDist.zero:
 		for particle in particleList:
 			particle.velocity = [0, 0, 0]
 
