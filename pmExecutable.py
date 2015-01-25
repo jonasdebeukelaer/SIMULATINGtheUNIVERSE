@@ -16,20 +16,22 @@ print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-volume                   = [100, 100, 2]
+volume                   = [100, 100, 50]
 initialisationResolution = 1
-gridResolution           = 0.5
+gridResolution           = 1
 
 numParticles             = 1
 positionDistribution     = 0
 velocityDistribution     = 0
 
 maxVelocity              = 1
-hasCenterParticle        = False
+hasCenterParticle        = True
 
-numTimeSteps             = 10
+numTimeSteps             = 1000
 timeStepSize             = 0.01
-shootEvery               = 50
+shootEvery               = 100
+
+outputPotentialFieldXY   = True
 
 #------------------------------------------------#
 
@@ -38,10 +40,11 @@ shootEvery               = 50
 print "Initialising particles..."
 #particleList = pm.InitialiseParticles(volume, initialisationResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity)
 particleList = []
-particle1 = pm.Particle([25, 0., 0.], [0.,2.2, 0.], 1)
+particle1 = pm.Particle([10., 0., 0.], [0.,0.5, 0.], 1)
 particleList.append(particle1)
+
 if hasCenterParticle:
-	centreParticle = pm.Particle([0., 0., 0.], [0., 0., 0.,], 30)
+	centreParticle = pm.Particle([0., 0., 0.], [0., 0., 0.,], 1000)
 	particleList.append(centreParticle)
 	numParticles += 1
 print"Done\n"
@@ -55,7 +58,7 @@ greensFunction = pm.CreateGreensFunction(densityField.shape)
 print "Done\n"
 
 if os.path.exists("Results/values_frame0.3D"):
-	raw_input("Delete yo motherflippin results from the last test, you simpleton! Or, if you'rereally sure, just hit enter I guess...\n")
+	raw_input("Delete yo motherflippin results from the last test, you simpleton! Or, if you're really sure, just hit enter I guess...\n")
 
 #------------------------------------------------#
 
@@ -72,7 +75,7 @@ while timeStep < numTimeSteps:
 		f = open("Results/values_frame%d.3D" % (timeStep), "w")
 		f.write("x y z VelocityMagnitude\n")
 
-	densityField   = pm.CalculateDensityField(volume, gridResolution, particleList)
+	densityField   = pm.CalculateDensityField(volume, gridResolution, particleList, True)
 	potentialField = pm.SolvePotential(densityField, greensFunction, timeStep)
 
 	for index, particle in enumerate(particleList):
@@ -82,21 +85,26 @@ while timeStep < numTimeSteps:
 			particle.acceleration = particleAcceleration
 
 		particle.position     += np.multiply(timeStepSize, particle.velocity) + np.multiply(0.5 * timeStepSize**2, particle.acceleration)
-		#pm.PositionCorrect(particle, volume)
+		pm.PositionCorrect(particle, volume)
 		particle.velocity     -= np.multiply((0.5 * timeStepSize), (np.add(particle.acceleration, particleAcceleration))) # THIS IS UBER WRONG
 		#velocityMagnitude     =  ((particle.velocity[0])**2 + (particle.velocity[1])**2 + (particle.velocity[2])**2)
 		velocityMagnitude      =  ((particle.position[0])**2 + (particle.position[1])**2 + (particle.position[2])**2)
-		particle.acceleration =  particleAcceleration
+		particle.acceleration  =  particleAcceleration
 
-		if index == 1:
+		if particle.mass == 100:
 			particle.position = [0, 0, 0]
 			particle.velocity = [0, 0, 0]
+
 		if shoot:
 			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], velocityMagnitude))
 
 	if shoot:
 		f.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 0., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 0.))
 		f.close()
+
+		if outputPotentialFieldXY:
+			PotentialXY = potentialField[:][:][(volume[2]/2) -1]
+			pm.OutputPotentialFieldXY(PotentialXY, particleList, volume, timeStep)
 
 	timeStep += 1
 
