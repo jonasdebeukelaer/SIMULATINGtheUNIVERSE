@@ -21,13 +21,13 @@ initialisationResolution = 1
 gridResolution           = 0.01
 
 numParticles             = 1
-positionDistribution     = 0
-velocityDistribution     = 0
+positionDistribution     = pm.PositionDist.random
+velocityDistribution     = pm.VelocityDist.random
 
 maxVelocity              = 1
 hasCenterParticle        = True
 
-numTimeSteps             = 1000
+numTimeSteps             = 100000
 timeStepSize             = 0.001
 shootEvery               = 2
 
