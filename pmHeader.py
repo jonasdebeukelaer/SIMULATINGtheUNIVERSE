@@ -147,7 +147,7 @@ def GetNumberOfThreads():
 
 	return threads
 
-def SolvePotential(densityField, greensFunction, timeStep):
+def SolvePotential(densityField, greensFunction):
 	densityFieldFFT        = pyfftw.builders.rfftn(densityField, threads = GetNumberOfThreads())
 	densityFieldConvoluted = np.multiply(densityFieldFFT(), greensFunction)
 	potentialFieldJumbled  = pyfftw.builders.irfftn(densityFieldConvoluted, threads = GetNumberOfThreads())
