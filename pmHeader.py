@@ -208,3 +208,18 @@ def OutputPercentage(timeStep, numTimeSteps):
 	i = (float(timeStep + 1) / numTimeSteps) * 100
 	sys.stdout.write("\r%.2f%%" % i)
 	sys.stdout.flush()
+
+def OutputPotentialFieldXY(potentialXY, particleList, volume, timeStep):
+	g = open("PotentialResults/potential_frame%d.3D" % (timeStep), "w")
+	g.write("x y z Potential\n")
+
+	for i, column in enumerate(potentialXY):
+		for j, potentialValue in enumerate(column):
+				if potentialValue > 0.01 and i % 2 == 0 and j % 2 == 0:
+					g.write("%f %f 0 %f\n" % (i-49, j-49, potentialValue))
+
+	for particle in particleList:
+		g.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], 0.6))
+
+	g.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 0., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 0.))
+	g.close()

@@ -31,6 +31,8 @@ numTimeSteps             = 100000
 timeStepSize             = 0.001
 shootEvery               = 1
 
+outputPotentialFieldXY   = True
+
 #------------------------------------------------#
 
 #------------INITIALISATION FUNCTIONS------------#
@@ -40,6 +42,7 @@ print "Initialising particles..."
 particleList = []
 particle1 = pm.Particle([0.25, 0., 0.], [0., 3., 0.], 1)
 particleList.append(particle1)
+
 if hasCenterParticle:
 	centerParticle = pm.Particle([0., 0., 0.], [0., 0., 0.,], 20)
 	particleList.append(centerParticle)
@@ -56,7 +59,7 @@ greensFunction = pm.CreateGreensFunction(densityField.shape)
 print "Done\n"
 
 if os.path.exists("Results/values_frame0.3D"):
-	raw_input("Delete yo motherflippin results from the last test, you simpleton! Or, if you'rereally sure, just hit enter I guess...\n")
+	raw_input("Delete yo motherflippin results from the last test, you simpleton! Or, if you're really sure, just hit enter I guess...\n")
 
 #------------------------------------------------#
 
@@ -89,12 +92,17 @@ while timeStep < numTimeSteps:
 		if particle.mass == 20:
 			particle.position = [0, 0, 0]
 			particle.velocity = [0, 0, 0]
+
 		if shoot:
 			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], velocityMagnitude))
 
 	if shoot:
 		f.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 0., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 0.))
 		f.close()
+
+		if outputPotentialFieldXY:
+			PotentialXY = potentialField[:][:][(volume[2]/2) -1]
+			pm.OutputPotentialFieldXY(PotentialXY, particleList, volume, timeStep)
 
 	pm.OutputPercentage(timeStep, numTimeSteps)
 
