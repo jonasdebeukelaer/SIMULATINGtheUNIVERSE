@@ -19,6 +19,7 @@ class Particle:
 def InitialiseParticles(volume, initialisationResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity):
 	particleList = []
 	
+
 	for i in range(0, numParticles):
 		newParticle = Particle([0., 0., 0.] ,[0., 0., 0.], 1)
 		particleList.append(newParticle)
@@ -62,6 +63,10 @@ def InitialiseParticles(volume, initialisationResolution, numParticles, position
 		for particle in particleList:
 			particle.position = points[i, :]
 			i += 1
+
+	elif positionDistribution == 3:
+		
+
 
 	else:
 		print 'Invalid position distribution selected'

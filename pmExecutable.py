@@ -29,7 +29,7 @@ hasCenterParticle        = True
 
 numTimeSteps             = 1000
 timeStepSize             = 0.001
-shootEvery               = 1
+shootEvery               = 2
 
 outputPotentialFieldXY   = True
 
@@ -44,7 +44,7 @@ particle1 = pm.Particle([0.25, 0., 0.], [0., 3., 0.], 1)
 particleList.append(particle1)
 
 if hasCenterParticle:
-	centerParticle = pm.Particle([0., 0., 0.], [0., 0., 0.,], 20)
+	centerParticle = pm.Particle([0., 0., 0.], [0., -0.15, 0.,], 20)
 	particleList.append(centerParticle)
 	numParticles += 1
 print"Done\n"
@@ -89,9 +89,9 @@ while timeStep < numTimeSteps:
 		velocityMagnitude     =  ((particle.velocity[0])**2 + (particle.velocity[1])**2 + (particle.velocity[2])**2)
 		particle.acceleration =  particleAcceleration
 
-		if particle.mass == 20:
-			particle.position = [0, 0, 0]
-			particle.velocity = [0, 0, 0]
+		#if particle.mass == 20:
+		#	particle.position = [0, 0, 0]
+		#	particle.velocity = [0, 0, 0]
 
 		if shoot:
 			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], velocityMagnitude))
