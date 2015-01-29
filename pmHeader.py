@@ -151,17 +151,14 @@ def CreateGreensFunction(unalteredShape):
 
 	constant = 1
 
-	outputGreens = open('greensFunction.3D', 'w')
-	outputGreens.write('x y z amp\n')
-
 	for l in range(0, shape[0]):
-		if l < shape[0] / 2:
+		if l < (shape[0] / 2):
 			kx = 2 * math.pi * l / (shape[0])
 		else:
 			kx = 2 * math.pi * (l - shape[0]) / (shape[0])
 
 		for m in range(0, shape[1]):
-			if m < shape[1] / 2:
+			if m < (shape[1] / 2):
 				ky = 2 * math.pi * m / (shape[1])
 			else:
 				ky = 2 * math.pi * (m - shape[1]) / (shape[1])
@@ -171,9 +168,7 @@ def CreateGreensFunction(unalteredShape):
 
 				if l != 0 or m != 0 or n != 0:
 					greensArray[l][m][n] = - constant / ((math.sin(kx * 0.5))**2 + (math.sin(ky * 0.5))**2 + (math.sin(kz * 0.5))**2)
-				if greensArray[l][m][n] < -2:
-					outputGreens.write('%f %f %f %f\n' % (l, m, n, math.log(-greensArray[l][m][n])))
-	outputGreens.close()
+				
 	return greensArray
 
 def GetNumberOfThreads():

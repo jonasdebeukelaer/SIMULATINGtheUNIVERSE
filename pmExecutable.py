@@ -60,6 +60,7 @@ print greensFunction.shape
 print "Done\n"
 
 if os.path.exists("Results/values_frame0.3D"):
+	Notifier.notify('You should probably make them not exist...', title = 'Results still exist')
 	raw_input("Delete yo motherflippin results from the last test, you simpleton! Or, if you're really sure, just hit enter I guess...\n")
 
 #------------------------------------------------#
