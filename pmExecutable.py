@@ -25,10 +25,10 @@ positionDistribution     = pm.PositionDist.random
 velocityDistribution     = pm.VelocityDist.random
 
 maxVelocity              = 1
-hasCenterParticle        = True
+hasCenterParticle        = False
 
-numTimeSteps             = 100000
-timeStepSize             = 0.001
+numTimeSteps             = 10000
+timeStepSize             = 0.01
 shootEvery               = 1
 
 outputPotentialFieldXY   = True
@@ -40,7 +40,7 @@ outputPotentialFieldXY   = True
 print "Initialising particles..."
 #particleList = pm.InitialiseParticles(volume, initialisationResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity)
 particleList = []
-particle1 = pm.Particle([0.25, 0., 0.], [0., 3., 0.], 1)
+particle1 = pm.Particle([0.25, 0., 0.], [0., 1., 0.], 1)
 particleList.append(particle1)
 
 if hasCenterParticle:
@@ -59,6 +59,7 @@ greensFunction = pm.CreateGreensFunction(densityField.shape)
 print "Done\n"
 
 if os.path.exists("Results/values_frame0.3D"):
+	Notifier.notify('You should probably make them not exist...', title = 'Results still exist')
 	raw_input("Delete yo motherflippin results from the last test, you simpleton! Or, if you're really sure, just hit enter I guess...\n")
 
 #------------------------------------------------#
@@ -89,9 +90,9 @@ while timeStep < numTimeSteps:
 		velocityMagnitude     =  ((particle.velocity[0])**2 + (particle.velocity[1])**2 + (particle.velocity[2])**2)
 		particle.acceleration =  particleAcceleration
 
-		if particle.mass == 20:
-			particle.position = [0, 0, 0]
-			particle.velocity = [0, 0, 0]
+		#if particle.mass == 20:
+		#	particle.position = [0, 0, 0]
+		#	particle.velocity = [0, 0, 0]
 
 		if shoot:
 			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], velocityMagnitude))

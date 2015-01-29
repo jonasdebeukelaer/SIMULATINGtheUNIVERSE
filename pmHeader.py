@@ -128,19 +128,19 @@ def CreateGreensFunction(unalteredShape):
 	constant = 1
 
 	for l in range(0, shape[0]):
-		if l <= shape[0] / 2:
-			kx = 2 * math.pi * l / (shape[0] - 1)
+		if l < (shape[0] / 2):
+			kx = 2 * math.pi * l / (shape[0])
 		else:
-			kx = 2 * math.pi * (l - shape[0]) / (shape[0] - 1)
+			kx = 2 * math.pi * (l - shape[0]) / (shape[0])
 
 		for m in range(0, shape[1]):
-			if m <= shape[1] / 2:
-				ky = 2 * math.pi * m / (shape[1] - 1)
+			if m < (shape[1] / 2):
+				ky = 2 * math.pi * m / (shape[1])
 			else:
-				ky = 2 * math.pi * (m - shape[1]) / (shape[1] - 1)
+				ky = 2 * math.pi * (m - shape[1]) / (shape[1])
 
 			for n in range(0, shape[2]):
-				kz = math.pi * n / (shape[2] - 1)
+				kz = math.pi * n / (shape[2])
 
 				if l != 0 or m != 0 or n != 0:
 					greensArray[l][m][n] = - constant / ((math.sin(kx * 0.5))**2 + (math.sin(ky * 0.5))**2 + (math.sin(kz * 0.5))**2)
@@ -190,9 +190,9 @@ def CalculateParticleAcceleration(particle, potentialField, gridResolution):
 	yNeighbours = FindPlusMinus(yMesh, meshShape[1])
 	zNeighbours = FindPlusMinus(zMesh, meshShape[2])
 
-	xAcceleration = - (potentialField[xNeighbours[0]][yMesh][zMesh] - potentialField[xNeighbours[1]][yMesh][zMesh]) / 2.0
-	yAcceleration = - (potentialField[xMesh][yNeighbours[0]][zMesh] - potentialField[xMesh][yNeighbours[1]][zMesh]) / 2.0
-	zAcceleration = - (potentialField[xMesh][yMesh][zNeighbours[0]] - potentialField[xMesh][yMesh][zNeighbours[1]]) / 2.0
+	xAcceleration = - (potentialField[xNeighbours[0]][yMesh][zMesh] - potentialField[xNeighbours[1]][yMesh][zMesh]) / (2.0 * particle.mass)
+	yAcceleration = - (potentialField[xMesh][yNeighbours[0]][zMesh] - potentialField[xMesh][yNeighbours[1]][zMesh]) / (2.0 * particle.mass)
+	zAcceleration = - (potentialField[xMesh][yMesh][zNeighbours[0]] - potentialField[xMesh][yMesh][zNeighbours[1]]) / (2.0 * particle.mass)
 
 	return (xAcceleration, yAcceleration, zAcceleration)
 
