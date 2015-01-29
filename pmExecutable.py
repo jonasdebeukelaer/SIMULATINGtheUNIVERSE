@@ -16,20 +16,20 @@ print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-volume                   = [2.5, 2.5, 2.5]
+volume                   = [100, 100, 100]
 initialisationResolution = 1
-gridResolution           = 0.01
+gridResolution           = 1
 
 numParticles             = 1
 positionDistribution     = pm.PositionDist.random
 velocityDistribution     = pm.VelocityDist.random
 
 maxVelocity              = 1
-hasCenterParticle        = True
+hasCenterParticle        = False
 
-numTimeSteps             = 100000
-timeStepSize             = 0.001
-shootEvery               = 2
+numTimeSteps             = 200
+timeStepSize             = 0.01
+shootEvery               = 100
 
 outputPotentialFieldXY   = True
 
@@ -40,11 +40,11 @@ outputPotentialFieldXY   = True
 print "Initialising particles..."
 #particleList = pm.InitialiseParticles(volume, initialisationResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity)
 particleList = []
-particle1 = pm.Particle([0.25, 0., 0.], [0., 3., 0.], 1)
+particle1 = pm.Particle([0., 0., 0.], [0.5, 0., 0.], 50)
 particleList.append(particle1)
 
 if hasCenterParticle:
-	centerParticle = pm.Particle([0., 0., 0.], [0., -0.15, 0.,], 20)
+	centerParticle = pm.Particle([0., 0., 0.], [0., 0., 0.], 50)
 	particleList.append(centerParticle)
 	numParticles += 1
 print"Done\n"
@@ -56,6 +56,7 @@ print "Done\n"
 
 print "Calculating Green's function..."
 greensFunction = pm.CreateGreensFunction(densityField.shape)
+print greensFunction.shape
 print "Done\n"
 
 if os.path.exists("Results/values_frame0.3D"):
@@ -102,7 +103,7 @@ while timeStep < numTimeSteps:
 
 		if outputPotentialFieldXY:
 			PotentialXY = potentialField[:][:][(volume[2]/2) -1]
-			pm.OutputPotentialFieldXY(PotentialXY, particleList, volume, timeStep)
+			pm.OutputPotentialFieldXY(PotentialXY, particleList, volume, timeStep, gridResolution)
 
 	pm.OutputPercentage(timeStep, numTimeSteps)
 
