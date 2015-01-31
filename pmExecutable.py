@@ -56,6 +56,7 @@ print "Done\n"
 
 print "Calculating Green's function..."
 greensFunction = pm.CreateGreensFunction(densityField.shape)
+print greensFunction.shape
 print "Done\n"
 
 if os.path.exists("Results/values_frame0.3D"):
