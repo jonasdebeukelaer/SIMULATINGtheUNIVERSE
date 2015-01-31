@@ -16,20 +16,20 @@ print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-volume                   = [2.5, 2.5, 2.5]
+volume                   = [100, 100, 100]
 initialisationResolution = 1
-gridResolution           = 0.01
+gridResolution           = 1
 
 numParticles             = 1
 positionDistribution     = pm.PositionDist.random
 velocityDistribution     = pm.VelocityDist.random
 
 maxVelocity              = 1
-hasCenterParticle        = False
+hasCenterParticle        = True
 
-numTimeSteps             = 10000
+numTimeSteps             = 2000
 timeStepSize             = 0.01
-shootEvery               = 1
+shootEvery               = 100
 
 outputPotentialFieldXY   = True
 
@@ -40,11 +40,11 @@ outputPotentialFieldXY   = True
 print "Initialising particles..."
 #particleList = pm.InitialiseParticles(volume, initialisationResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity)
 particleList = []
-particle1 = pm.Particle([0.25, 0., 0.], [0., 1., 0.], 1)
+particle1 = pm.Particle([20., 20., 0.], [0., 0., 0.], 100)
 particleList.append(particle1)
 
 if hasCenterParticle:
-	centerParticle = pm.Particle([0., 0., 0.], [0., 0., 0.,], 20)
+	centerParticle = pm.Particle([-20., -20., 0.], [0., 1., 0.,], 100)
 	particleList.append(centerParticle)
 	numParticles += 1
 print"Done\n"
@@ -102,8 +102,7 @@ while timeStep < numTimeSteps:
 		f.close()
 
 		if outputPotentialFieldXY:
-			PotentialXY = potentialField[:][:][(volume[2]/2) -1]
-			pm.OutputPotentialFieldXY(PotentialXY, particleList, volume, timeStep)
+			pm.OutputPotentialFieldXY(densityField, particleList, volume, timeStep, gridResolution)
 
 	pm.OutputPercentage(timeStep, numTimeSteps)
 
@@ -111,7 +110,7 @@ while timeStep < numTimeSteps:
 
 	if timeStep == numTimeSteps:
 		Notifier.notify('%d time steps complete' % (numTimeSteps), title = 'User input required')
-		moreSteps = raw_input("\n\nPlease check your VisIt output... would you like to add more time steps         (currently %d run)? (y/n): " % (numTimeSteps))
+		moreSteps = raw_input("\n\nPlease check your VisIt output... would you like to add more time steps (currently %d run)? (y/n): " % (numTimeSteps))
 		if moreSteps == 'y':
 			extraSteps = int(raw_input("\nInput desired number of extra steps: "))
 			sys.stdout.write("\n")
