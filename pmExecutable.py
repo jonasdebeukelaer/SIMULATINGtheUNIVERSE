@@ -7,6 +7,7 @@ import sys
 import random
 import time
 import pyfftw
+import glob
 from pync import Notifier
 
 start = time.time()
@@ -16,11 +17,11 @@ print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-volume                   = [2.5, 2.5, 2.5]
+volume                   = [100, 100, 100]
 initialisationResolution = 1
-gridResolution           = 0.01
+gridResolution           = 1
 
-numParticles             = 1
+numParticles             = 2
 positionDistribution     = pm.PositionDist.random
 velocityDistribution     = pm.VelocityDist.random
 
@@ -28,10 +29,10 @@ maxVelocity              = 1
 hasCenterParticle        = False
 
 numTimeSteps             = 10000
-timeStepSize             = 0.01
-shootEvery               = 1
+timeStepSize             = 0.1
+shootEvery               = 100
 
-outputPotentialFieldXY   = True
+outputPotentialFieldXY   = False
 
 #------------------------------------------------#
 
@@ -40,11 +41,13 @@ outputPotentialFieldXY   = True
 print "Initialising particles..."
 #particleList = pm.InitialiseParticles(volume, initialisationResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity)
 particleList = []
-particle1 = pm.Particle([0.25, 0., 0.], [0., 1., 0.], 1)
+particle1 = pm.Particle([0., 0., 0.], [0., 0., 0.], 1000)
+particle2 = pm.Particle([20., 0., 0.], [0., 0.5, 0.], 1)
 particleList.append(particle1)
+particleList.append(particle2)
 
 if hasCenterParticle:
-	centerParticle = pm.Particle([0., 0., 0.], [0., 0., 0.,], 20)
+	centerParticle = pm.Particle([0., 0., 0.], [0., 0., 0.,], 5)
 	particleList.append(centerParticle)
 	numParticles += 1
 print"Done\n"
@@ -60,13 +63,20 @@ print "Done\n"
 
 if os.path.exists("Results/values_frame0.3D"):
 	Notifier.notify('You should probably make them not exist...', title = 'Results still exist')
-	raw_input("Delete yo motherflippin results from the last test, you simpleton! Or, if you're really sure, just hit enter I guess...\n")
+	deleteFiles = raw_input("Would you like to delete yo motherflippin results from the last test, you       simpleton? (y/n): ")
+	if deleteFiles == 'y':
+		fileList = glob.glob("Results/*.3D")
+		potentialFileList = glob.glob("PotentialResults/*.3D")
+		for resultFile in fileList:
+			os.remove(resultFile)
+		for potentialFile in potentialFileList:
+			os.remove(potentialFile)
 
 #------------------------------------------------#
 
 #-----------------ITERATION LOOP-----------------#
 
-print "Iterating..."
+print "\nIterating..."
 timeStep = 0
 while timeStep < numTimeSteps:
 
@@ -102,8 +112,8 @@ while timeStep < numTimeSteps:
 		f.close()
 
 		if outputPotentialFieldXY:
-			PotentialXY = potentialField[:][:][(volume[2]/2) -1]
-			pm.OutputPotentialFieldXY(PotentialXY, particleList, volume, timeStep)
+			potentialXY = potentialField[:][:][:]
+			pm.OutputPotentialFieldXY(potentialXY, volume, timeStep, gridResolution)
 
 	pm.OutputPercentage(timeStep, numTimeSteps)
 

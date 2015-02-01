@@ -122,7 +122,7 @@ def CalculateDensityField(volume, gridResolution, particleList, populateArray = 
 	return densityFieldMesh
 
 def CreateGreensFunction(unalteredShape):
-	shape       = (unalteredShape[0], unalteredShape[1], (unalteredShape[2] / 2) + 1)
+	shape       = (unalteredShape[0], unalteredShape[1], unalteredShape[2])# / 2) + 1)
 	greensArray = np.zeros((shape))
 
 	constant = 1
@@ -161,7 +161,7 @@ def GetNumberOfThreads():
 
 def SolvePotential(densityField, greensFunction):
 	densityFieldFFT        = pyfftw.builders.rfftn(densityField, threads = GetNumberOfThreads())
-	densityFieldConvoluted = np.multiply(densityFieldFFT(), greensFunction)
+	densityFieldConvoluted = np.multiply(greensFunction, densityFieldFFT())
 	potentialFieldJumbled  = pyfftw.builders.irfftn(densityFieldConvoluted, threads = GetNumberOfThreads())
 	potentialField         = np.fft.fftshift(potentialFieldJumbled())
 	return potentialField
@@ -209,17 +209,18 @@ def OutputPercentage(timeStep, numTimeSteps):
 	sys.stdout.write("\r%.2f%%" % i)
 	sys.stdout.flush()
 
-def OutputPotentialFieldXY(potentialXY, particleList, volume, timeStep):
+def OutputPotentialFieldXY(potentialXY, volume, timeStep, gridResolution):
 	g = open("PotentialResults/potential_frame%d.3D" % (timeStep), "w")
 	g.write("x y z Potential\n")
 
-	for i, column in enumerate(potentialXY):
-		for j, potentialValue in enumerate(column):
-				if potentialValue > 0.01 and i % 2 == 0 and j % 2 == 0:
-					g.write("%f %f 0 %f\n" % (i-49, j-49, potentialValue))
+	for i in range(0, volume[0]):
+		for j in range(0, volume[1]):
+			for k in range(0, volume[2]):
+				if potentialXY[i][j][k] != 0:
+					g.write("%f %f %f %f\n" % ((i*gridResolution)-((volume[0]/2)-1), (j*gridResolution)-((volume[1]/2)-1), (k*gridResolution)-((volume[2]/2)-1), potentialXY[i][j][k]))
 
-	for particle in particleList:
-		g.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], 0.6))
+	#for particle in particleList:
+	#	g.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], 0.6))
 
-	g.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 0., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 0.))
+	#g.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 0., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 0.))
 	g.close()
