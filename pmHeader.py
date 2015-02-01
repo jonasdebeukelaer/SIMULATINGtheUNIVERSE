@@ -244,7 +244,7 @@ def OutputPotentialFieldXY(potentialField, particleList, volume, timeStep, gridR
 				g.write("%f %f 0 %f\n" % (i*gridResolution-((volume[0]/2)-1), j*gridResolution-((volume[1]/2)-1), potentialValue))
 
 	for particle in particleList:
-		g.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], 0.1)
+		g.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], 0.1))
 
 	g.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 0., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 0.))
 	g.close()

@@ -40,11 +40,11 @@ outputPotentialFieldXY   = True
 print "Initialising particles..."
 #particleList = pm.InitialiseParticles(volume, initialisationResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity)
 particleList = []
-particle1 = pm.Particle([20., 20., 0.], [0., 0., 0.], 100)
+particle1 = pm.Particle([20., 20., 0.], [0., 0., 0.], 20)
 particleList.append(particle1)
 
 if hasCenterParticle:
-	centerParticle = pm.Particle([-20., -20., 0.], [0., 1., 0.,], 100)
+	centerParticle = pm.Particle([-20., -20., 0.], [0., 1., 0.,], 20)
 	particleList.append(centerParticle)
 	numParticles += 1
 print"Done\n"
@@ -103,7 +103,7 @@ while timeStep < numTimeSteps:
 		f.close()
 
 		if outputPotentialFieldXY:
-			pm.OutputPotentialFieldXY(densityField, particleList, volume, timeStep, gridResolution)
+			pm.OutputPotentialFieldXY(potentialField, particleList, volume, timeStep, gridResolution)
 
 	pm.OutputPercentage(timeStep, numTimeSteps)
 
