@@ -146,7 +146,7 @@ def CalculateDensityField(volume, gridResolution, particleList, populateArray = 
 	return densityFieldMesh
 
 def CreateGreensFunction(unalteredShape):
-	shape       = (unalteredShape[0], unalteredShape[1], (unalteredShape[2] / 2) + 1)
+	shape       = (unalteredShape[0], unalteredShape[1], unalteredShape[2])# / 2) + 1)
 	greensArray = np.zeros((shape))
 
 	constant = 1
@@ -185,7 +185,7 @@ def GetNumberOfThreads():
 
 def SolvePotential(densityField, greensFunction):
 	densityFieldFFT        = pyfftw.builders.rfftn(densityField, threads = GetNumberOfThreads())
-	densityFieldConvoluted = np.multiply(densityFieldFFT(), greensFunction)
+	densityFieldConvoluted = np.multiply(greensFunction, densityFieldFFT())
 	potentialFieldJumbled  = pyfftw.builders.irfftn(densityFieldConvoluted, threads = GetNumberOfThreads())
 	potentialField         = np.fft.fftshift(potentialFieldJumbled())
 	return potentialField
@@ -246,5 +246,5 @@ def OutputPotentialFieldXY(potentialField, particleList, volume, timeStep, gridR
 	for particle in particleList:
 		g.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], 0.1))
 
-	g.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 0., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 0.))
+	#g.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 0., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 0.))
 	g.close()
