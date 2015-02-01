@@ -31,6 +31,15 @@ class VelocityDist(Enum):
 def InitialiseParticles(volume, initialisationResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity):
 	particleList = []
 	
+	if positionDistribution == PositionDist.correctField:
+		check = numParticles**(1/3)
+		if check != int(check):
+			print 'Not a cubed number of particles...\n'
+			check += 0.5
+			check = round(check)
+			numParticles = check**3
+			print 'New numParticles = %d' % (numParticles)
+
 	for i in range(0, numParticles):
 		newParticle = Particle([0., 0., 0.] ,[0., 0., 0.], 1)
 		particleList.append(newParticle)
@@ -74,6 +83,21 @@ def InitialiseParticles(volume, initialisationResolution, numParticles, position
 		for particle in particleList:
 			particle.position = points[i, :]
 			i += 1
+
+	elif positionDistribution == 3:
+		numPerSide = numParticles**(1/3)
+		particleNumber = 0
+		for i in range(0, numPerSide):
+			x = volume[0]/2 - i*volume[0]/numPerSide
+			for j in range(0, numPerSide):
+				y = volume[1]/2 - i*volume[1]/numPerSide
+				for k in range(0, numPerSide):
+					z = volume[2]/2 - i*volume[2]/numPerSide
+					particleList[particleNumber].position = [x,y,z]
+					particleNumber+=1
+
+
+
 
 	else:
 		print 'Invalid position distribution selected'
@@ -144,7 +168,7 @@ def CreateGreensFunction(unalteredShape):
 
 				if l != 0 or m != 0 or n != 0:
 					greensArray[l][m][n] = - constant / ((math.sin(kx * 0.5))**2 + (math.sin(ky * 0.5))**2 + (math.sin(kz * 0.5))**2)
-
+				
 	return greensArray
 
 def GetNumberOfThreads():
@@ -155,7 +179,7 @@ def GetNumberOfThreads():
 		threads = 4
 	else:
 		print "Imposter!"
-		threads = 0
+		threads = 1
 
 	return threads
 
@@ -209,18 +233,18 @@ def OutputPercentage(timeStep, numTimeSteps):
 	sys.stdout.write("\r%.2f%%" % i)
 	sys.stdout.flush()
 
-def OutputPotentialFieldXY(potentialXY, volume, timeStep, gridResolution):
+def OutputPotentialFieldXY(potentialField, particleList, volume, timeStep, gridResolution):
 	g = open("PotentialResults/potential_frame%d.3D" % (timeStep), "w")
 	g.write("x y z Potential\n")
-
+	
 	for i in range(0, volume[0]):
 		for j in range(0, volume[1]):
-			for k in range(0, volume[2]):
-				if potentialXY[i][j][k] != 0:
-					g.write("%f %f %f %f\n" % ((i*gridResolution)-((volume[0]/2)-1), (j*gridResolution)-((volume[1]/2)-1), (k*gridResolution)-((volume[2]/2)-1), potentialXY[i][j][k]))
+			potentialValue = potentialField[i][j][49]
+			if potentialValue > 0.01 and i % 2 == 0 and j % 2 == 0:
+				g.write("%f %f 0 %f\n" % (i*gridResolution-((volume[0]/2)-1), j*gridResolution-((volume[1]/2)-1), potentialValue))
 
-	#for particle in particleList:
-	#	g.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], 0.6))
+	for particle in particleList:
+		g.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], 0.1)
 
 	#g.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 0., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 0.))
 	g.close()
