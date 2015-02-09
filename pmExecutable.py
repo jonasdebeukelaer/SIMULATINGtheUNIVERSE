@@ -21,14 +21,14 @@ volume                   = [100, 100, 100]
 initialisationResolution = 1
 gridResolution           = 1
 
-numParticles             = 2
+numParticles             = 1
 positionDistribution     = pm.PositionDist.random
 velocityDistribution     = pm.VelocityDist.random
 
 maxVelocity              = 1
-hasCenterParticle        = True
+hasCenterParticle        = False
 
-numTimeSteps             = 2000
+numTimeSteps             = 2
 timeStepSize             = 0.01
 shootEvery               = 100
 
@@ -41,11 +41,13 @@ outputPotentialFieldXY   = False
 print "Initialising particles..."
 #particleList = pm.InitialiseParticles(volume, initialisationResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity)
 particleList = []
-particle1 = pm.Particle([20., 20., 0.], [0., 0., 0.], 20)
+particle1 = pm.Particle([0., 0., 0.], [0., 0., 0.], 20)
 particleList.append(particle1)
+#particle2 = pm.Particle([-20., -10., 0.], [0., 0., 0.], 20)
+#particleList.append(particle2)
 
 if hasCenterParticle:
-	centerParticle = pm.Particle([-20., -20., 0.], [0., 1., 0.,], 20)
+	centerParticle = pm.Particle([0., 24.64, 0.], [0., -1., 0.,], 20)
 	particleList.append(centerParticle)
 	numParticles += 1
 print"Done\n"
