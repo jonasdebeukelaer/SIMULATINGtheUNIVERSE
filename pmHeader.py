@@ -168,7 +168,6 @@ def CreateGreensFunction(unalteredShape):
 
 				if l != 0 or m != 0 or n != 0:
 					greensArray[l][m][n] = - constant / ((math.sin(kx * 0.5))**2 + (math.sin(ky * 0.5))**2 + (math.sin(kz * 0.5))**2)
-					#greensArray[l][m][n] = - constant / (kx**2 + ky**2 + kz**2)
 				
 	return greensArray
 
@@ -185,17 +184,15 @@ def GetNumberOfThreads():
 	return threads
 
 def SolvePotential(densityField, greensFunction):
-	vol = [100, 100, 51]
-	#shiftedDensity = np.fft.fftshift(densityField)
-	densityFieldFFT        = pyfftw.builders.irfftn(densityField, axes = (0,1,2), threads = GetNumberOfThreads())
+	densityFieldFFT   = pyfftw.builders.rfftn(densityField, threads=GetNumberOfThreads())
 	densityFFT = densityFieldFFT()
-	#OutputPotentialFieldXY(field2D, [], [100, 100, 100], 0, 1)
-	#print densityFieldFFT().shape
-	OutputPotentialFieldXY(densityFFT, [], [100, 100, 51], 1, 2)
 
 	densityFieldConvoluted = np.multiply(greensFunction, densityFFT)
-	potentialFieldJumbled  = pyfftw.builders.irfftn(densityFieldConvoluted, threads = GetNumberOfThreads())
-	potentialField         = np.fft.fftshift(potentialFieldJumbled())
+	potentialField = np.fft.irfftn(densityFieldConvoluted)
+	
+	#potentialFieldJumbled  = pyfftw.builders.irfftn(densityFFTconvoluted, axes=[0, 1, 2])
+	#potentialField         = np.fft.fftshift(potentialFieldJumbled())
+	
 	return potentialField
 
 def FindPlusMinus(meshIndex, axisSize):
@@ -245,31 +242,30 @@ def OutputPotentialFieldXY(potentialField, particleList, volume, timeStep, gridR
 	g = open("PotentialResults/potential_frame%d.3D" % (timeStep), "w")
 	g.write("x y z Potential\n")
 	
-	for i in range(0, volume[0]):
-		for j in range(0, volume[1]):
-			for k in range(0, volume[2]):
+	for i in range(0, int(volume[0]/gridResolution)):
+		for j in range(0, int(volume[1]/gridResolution)):
+			for k in range(0, int(volume[2]/gridResolution)):
 				potentialValue = potentialField[i][j][k]
 				#if potentialValue < -0.01 and i % 2 == 0 and j % 2 == 0:
-				#if i % 2 == 0 and j % 2 == 0:
-				if potentialValue != 0:
-					g.write("%f %f 0 %f\n" % (i*gridResolution-((volume[0]/2)-1), j*gridResolution-((volume[1]/2)-1), potentialValue))
+				if i % 2 == 0 and j % 2 == 0 and k % 2 ==0:
+					g.write("%f %f %f %f\n" % (i*gridResolution-((volume[0]/2)), j*gridResolution-((volume[1]/2)), k*gridResolution-((volume[2]/2)-1), potentialValue))
 
-	#for i in range(0, volume[1]):
-	#	for j in range(0, volume[2]):
-	#		potentialValue = potentialField[0][i][j]
-	#		#if potentialValue < -0.01 and i % 2 == 0 and j % 2 == 0:
-	#		if i % 2 == 0 and j % 2 == 0:
-	#			g.write("0 %f %f %f\n" % (i*gridResolution-((volume[0]/2)-1), j*gridResolution-((volume[1]/2)-1), potentialValue))
+	sliceOutput = open("PotentialResults/potential_slice%d.3D" % timeStep, "w")
+	sliceOutput.write("x y z Potential\n")
 
-	#for i in range(0, volume[2]):
-	#	for j in range(0, volume[0]):
-	#		potentialValue = potentialField[j][0][i]
-	#		#if potentialValue < -0.01 and i % 2 == 0 and j % 2 == 0:
-	#		if i % 2 == 0 and j % 2 == 0:
-	#			g.write("%f 0 %f %f\n" % (j*gridResolution-((volume[0]/2)-1), i*gridResolution-((volume[1]/2)-1), potentialValue))
+	for i in range(0, int(volume[0]/gridResolution)):
+		for j in range(0, int(volume[1]/gridResolution)):
+			for k in range(0, int(volume[2]/gridResolution)):
+				potentialValue = potentialField[i][j][0]
+				if i % 4 == 0 and j % 4 == 0:	
+					sliceOutput.write("%f %f 0 %f\n" % (i*gridResolution-((volume[0]/2)), j*gridResolution-((volume[1]/2)), potentialValue))
+
 
 	for particle in particleList:
-		g.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], 0.1))
+		sliceOutput.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], -0.1))
 
-	#g.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 0., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 0.))
+	g.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 0., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 0.))
 	g.close()
+
+	sliceOutput.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 0., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 0.))
+	sliceOutput.close()

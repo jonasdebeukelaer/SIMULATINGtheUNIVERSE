@@ -17,22 +17,22 @@ print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-volume                   = [100, 100, 100]
+volume                   = [50, 50, 50]
 initialisationResolution = 1
 gridResolution           = 1
 
-numParticles             = 1
+numParticles             = 2
 positionDistribution     = pm.PositionDist.random
 velocityDistribution     = pm.VelocityDist.random
 
 maxVelocity              = 1
 hasCenterParticle        = False
 
-numTimeSteps             = 2
+numTimeSteps             = 10000
 timeStepSize             = 0.01
-shootEvery               = 100
+shootEvery               = 50
 
-outputPotentialFieldXY   = False
+outputPotentialFieldXY   = True
 
 #------------------------------------------------#
 
@@ -41,10 +41,12 @@ outputPotentialFieldXY   = False
 print "Initialising particles..."
 #particleList = pm.InitialiseParticles(volume, initialisationResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity)
 particleList = []
+particle2 = pm.Particle([10., 0., 0.], [0., 0.8, 0.], 1)
+particleList.append(particle2)
+
 particle1 = pm.Particle([0., 0., 0.], [0., 0., 0.], 20)
 particleList.append(particle1)
-#particle2 = pm.Particle([-20., -10., 0.], [0., 0., 0.], 20)
-#particleList.append(particle2)
+
 
 if hasCenterParticle:
 	centerParticle = pm.Particle([0., 24.64, 0.], [0., -1., 0.,], 20)
@@ -97,7 +99,7 @@ while timeStep < numTimeSteps:
 
 		particle.position     += np.multiply(timeStepSize, particle.velocity) + np.multiply(0.5 * timeStepSize**2, particle.acceleration)
 		pm.PositionCorrect(particle, volume)
-		particle.velocity     -= np.multiply((0.5 * timeStepSize), (np.add(particle.acceleration, particleAcceleration))) # THIS IS UBER WRONG
+		particle.velocity     += np.multiply((0.5 * timeStepSize), (np.add(particle.acceleration, particleAcceleration)))
 		velocityMagnitude     =  ((particle.velocity[0])**2 + (particle.velocity[1])**2 + (particle.velocity[2])**2)
 		particle.acceleration =  particleAcceleration
 
