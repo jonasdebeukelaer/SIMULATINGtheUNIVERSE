@@ -63,7 +63,9 @@ def xyzGaussianArray(shape, xSigma, ySigma, zSigma):
 volume = [100, 100, 100]
 sphereRadius = 20
 
-sphere = MakeSphere(volume, sphereRadius)
+#sphere = MakeSphere(volume, sphereRadius)
+sphere = np.zeros((volume))
+sphere[50][20][30] = 10
 gaussianSmoother = xyzGaussianArray(volume, 4, 4, 4)
 
 sphereFFT     = pyfftw.builders.rfftn(sphere)

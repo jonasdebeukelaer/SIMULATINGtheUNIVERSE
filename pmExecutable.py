@@ -33,6 +33,7 @@ stepSize               = 0.01
 shootEvery             = 100
 
 outputPotentialFieldXY = False
+outputSystemEnergy     = False
 
 #------------------------------------------------#
 
@@ -84,7 +85,9 @@ while a < maxA:
 	densityField   = pm.CalculateDensityField(volume, gridResolution, particleList)
 	potentialField = pm.SolvePotential(densityField, greensFunction)
 
-	for particle in particleList:
+	accumulatedEnergy = 0
+
+	for i, particle in enumerate(particleList):
 
 		particleAcceleration = pm.CalculateParticleAcceleration(particle, potentialField, gridResolution)
 		if timeStep == 0:
@@ -93,13 +96,19 @@ while a < maxA:
 		particle.position     += np.multiply(timeStepSize, particle.velocity) + np.multiply(0.5 * timeStepSize**2, particle.acceleration)
 		pm.PositionCorrect(particle, volume)
 		particle.velocity     += np.multiply((0.5 * timeStepSize), (np.add(particle.acceleration, particleAcceleration)))
-		velocityMagnitude     =  (((particle.velocity[0])**2 + (particle.velocity[1])**2 + (particle.velocity[2])**2))**0.5
-		particle.acceleration =  particleAcceleration
+		velocityMagnitude      = (((particle.velocity[0])**2 + (particle.velocity[1])**2 + (particle.velocity[2])**2))**0.5
+		particle.acceleration  = particleAcceleration
 
 		if shoot:
-			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], velocityMagnitude))
+			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], 0))
 
-	if shoot:
+			if outputSystemEnergy:
+				accumulatedEnergy += pm.OutputTotalEnergy(i, particle, particleList, velocityMagnitude)
+
+	
+	if shoot:		
+		f.write("0 %d 0 %f\n" % (volume[2]/2, accumulatedEnergy))
+
 		f.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 0., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 0.))
 		f.close()
 

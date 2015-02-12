@@ -287,7 +287,6 @@ def OutputPotentialFieldXY(potentialField, particleList, volume, timeStep, gridR
 		for j in range(0, int(volume[1]/gridResolution)):
 			for k in range(0, int(volume[2]/gridResolution)):
 				potentialValue = potentialField[i][j][k]
-				#if potentialValue < -0.01 and i % 2 == 0 and j % 2 == 0:
 				if i % 2 == 0 and j % 2 == 0 and k % 2 ==0:
 					g.write("%f %f %f %f\n" % (i*gridResolution-((volume[0]/2)), j*gridResolution-((volume[1]/2)), k*gridResolution-((volume[2]/2)-1), potentialValue))
 
@@ -310,3 +309,15 @@ def OutputPotentialFieldXY(potentialField, particleList, volume, timeStep, gridR
 
 	sliceOutput.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 0., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 0.))
 	sliceOutput.close()
+
+
+def OutputTotalEnergy(i, particle, particleList, velocityMagnitude):
+	potential = 0
+	for j, secondParticle in enumerate(particleList):
+		if j > i:
+			separation = particle.position - secondParticle.position
+			potential  = particle.mass * secondParticle.mass / math.sqrt(separation[0]**2 + separation[1]**2 + separation[2]**2)
+
+	kinetic = velocityMagnitude * particle.mass
+
+	return (potential + kinetic)
