@@ -17,7 +17,7 @@ print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-volume                 = [20, 20, 20]
+volume                 = [128, 128, 128]
 gridResolution         = 1
 
 numParticles           = 500
@@ -30,7 +30,7 @@ hasCenterParticle      = False
 startingA              = 0.1
 maxA                   = 1.0
 stepSize               = 0.001
-shootEvery             = 1
+shootEvery             = 10
 
 outputPotentialFieldXY = False
 outputSystemEnergy     = False
@@ -43,7 +43,7 @@ print "Initialising particles..."
 particleList = pm.InitialiseParticles(volume, gridResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA)
 if positionDistribution == pm.PositionDist.zeldovich:
 	numParticles = len(particleList)
-particleList[27].mass = 10000
+particleList[270].mass = 10000
 
 if hasCenterParticle:
 	centerParticle = pm.Particle([0., 24.64, 0.], [0., -1., 0.,], 20)
