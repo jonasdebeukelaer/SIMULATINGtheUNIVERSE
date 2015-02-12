@@ -17,7 +17,7 @@ print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-volume                 = [10, 10, 10]
+volume                 = [20, 20, 20]
 gridResolution         = 1
 
 numParticles           = 500
@@ -28,9 +28,9 @@ maxVelocity            = 1
 hasCenterParticle      = False
 
 startingA              = 0.1
-maxA                   = 1
-stepSize               = 0.01
-shootEvery             = 100
+maxA                   = 1.0
+stepSize               = 0.001
+shootEvery             = 1
 
 outputPotentialFieldXY = False
 outputSystemEnergy     = False
@@ -43,6 +43,7 @@ print "Initialising particles..."
 particleList = pm.InitialiseParticles(volume, gridResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA)
 if positionDistribution == pm.PositionDist.zeldovich:
 	numParticles = len(particleList)
+particleList[27].mass = 10000
 
 if hasCenterParticle:
 	centerParticle = pm.Particle([0., 24.64, 0.], [0., -1., 0.,], 20)
@@ -61,6 +62,7 @@ print "Done\n"
 if os.path.exists("Results/values_frame0.3D"):
 	Notifier.notify('You should probably make them not exist...', title = 'Results still exist')
 	deleteFiles = raw_input("Would you like to delete yo motherflippin results from the last test, you       simpleton? (y/n): ")
+	print '\n'
 	if deleteFiles == 'y':
 		fileList = glob.glob("Results/*.3D")
 		potentialFileList = glob.glob("PotentialResults/*.3D")
@@ -73,14 +75,15 @@ if os.path.exists("Results/values_frame0.3D"):
 
 #-----------------ITERATION LOOP-----------------#
 
-print "\nIterating..."
+print "Iterating..."
 a = startingA
+frameNo = 0
 while a < maxA:
 
-	shoot = True if (timeStep % shootEvery) == 0 else False
+	shoot = True if (frameNo % shootEvery) == 0 else False
 	if shoot:
-		f = open("Results/values_frame%d.3D" % (timeStep), "w")
-		f.write("x y z VelocityMagnitude\n")
+		f = open("Results/values_frame%d.3D" % (frameNo), "w")
+		f.write("x y z MomentumMagnitude\n")
 
 	densityField   = pm.CalculateDensityField(volume, gridResolution, particleList)
 	potentialField = pm.SolvePotential(densityField, greensFunction)
@@ -89,21 +92,17 @@ while a < maxA:
 
 	for i, particle in enumerate(particleList):
 
-		particleAcceleration = pm.CalculateParticleAcceleration(particle, potentialField, gridResolution)
-		if timeStep == 0:
-			particle.acceleration = particleAcceleration
-
-		particle.position     += np.multiply(timeStepSize, particle.velocity) + np.multiply(0.5 * timeStepSize**2, particle.acceleration)
+		particle.acceleration      = pm.CalculateParticleAcceleration(particle, potentialField, gridResolution)
+		particle.halfStepMomentum += np.multiply(pm.GetF(a - stepSize) * stepSize, particle.acceleration)
+		momentumMagnitude          = math.sqrt(particle.halfStepMomentum[0]**2 + particle.halfStepMomentum[1]**2 + particle.halfStepMomentum[2]**2)
+		particle.position         += np.multiply((a - (stepSize / 2))**(-2) * pm.GetF(a - (stepSize / 2)) * stepSize, particle.halfStepMomentum)
 		pm.PositionCorrect(particle, volume)
-		particle.velocity     += np.multiply((0.5 * timeStepSize), (np.add(particle.acceleration, particleAcceleration)))
-		velocityMagnitude      = (((particle.velocity[0])**2 + (particle.velocity[1])**2 + (particle.velocity[2])**2))**0.5
-		particle.acceleration  = particleAcceleration
 
 		if shoot:
-			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], 0))
+			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], momentumMagnitude))
 
 			if outputSystemEnergy:
-				accumulatedEnergy += pm.OutputTotalEnergy(i, particle, particleList, velocityMagnitude)
+				accumulatedEnergy += pm.OutputTotalEnergy(i, particle, particleList, momentumMagnitude)
 
 	
 	if shoot:		
@@ -113,19 +112,19 @@ while a < maxA:
 		f.close()
 
 		if outputPotentialFieldXY:
-			pm.OutputPotentialFieldXY(potentialField, particleList, volume, timeStep, gridResolution)
+			pm.OutputPotentialFieldXY(potentialField, particleList, volume, frameNo, gridResolution)
 
-	pm.OutputPercentage(timeStep, numTimeSteps)
+	pm.OutputPercentage(frameNo, (maxA - startingA) / stepSize)
 
-	a += stepSize
+	a       += stepSize
+	frameNo += 1
 
-	if timeStep == numTimeSteps:
-		Notifier.notify('%d time steps complete' % (numTimeSteps), title = 'User input required')
-		moreSteps = raw_input("\n\nPlease check your VisIt output... would you like to add more time steps (currently %d run)? (y/n): " % (numTimeSteps))
+	if int(a * 10000000) == int(maxA * 10000000):
+		Notifier.notify('a = %.3f reached' % (a), title = 'User input required')
+		moreSteps = raw_input("\n\nPlease check your VisIt output... would you like to increase max A (currently at a = %.3f)? (y/n): " % (a))
 		if moreSteps == 'y':
-			extraSteps = int(raw_input("\nInput desired number of extra steps: "))
+			maxA = int(raw_input("\nInput new max a: "))
 			sys.stdout.write("\n")
-			numTimeSteps += extraSteps
 
 #------------------------------------------------#
 

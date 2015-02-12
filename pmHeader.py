@@ -11,22 +11,22 @@ from enum import Enum
 G = 1
 
 class Particle:
-	def __init__(self, position, velocity, mass):
-		self.position     = position
-		self.velocity     = velocity
-		self.mass         = mass
-		self.acceleration = [0.0, 0.0, 0.0]
+	def __init__(self, position, halfStepMomentum, mass):
+		self.position         = position
+		self.halfStepMomentum = halfStepMomentum
+		self.mass             = mass
+		self.acceleration     = [0.0, 0.0, 0.0]
 
 class PositionDist(Enum):
-	random       = 1
-	randomShell  = 2
-	evenShell    = 3
-	zeldovich    = 4
+	random      = 1
+	randomShell = 2
+	evenShell   = 3
+	zeldovich   = 4
 
 class VelocityDist(Enum):
-	random       = 1
-	zero         = 2
-	zeldovich    = 3
+	random    = 1
+	zero      = 2
+	zeldovich = 3
 
 def ComputeDisplacementVectors(shape):
 	xDisplacementFourier = np.zeros((shape), dtype = 'complex128')
@@ -149,15 +149,15 @@ def InitialiseParticles(volume, gridResolution, numParticles, positionDistributi
 	# Random velocity distribution
 	if velocityDistribution == VelocityDist.random:
 		for particle in particleList:
-			xVelocity         = random.randrange(- maxVelocity / initialisationResolution, maxVelocity / initialisationResolution) * initialisationResolution
-			yVelocity         = random.randrange(- maxVelocity / initialisationResolution, maxVelocity / initialisationResolution) * initialisationResolution
-			zVelocity         = random.randrange(- maxVelocity / initialisationResolution, maxVelocity / initialisationResolution) * initialisationResolution
-			particle.velocity = [xVelocity, yVelocity, zVelocity]
+			xVelocity                 = random.randrange(- maxVelocity / initialisationResolution, maxVelocity / initialisationResolution) * initialisationResolution
+			yVelocity                 = random.randrange(- maxVelocity / initialisationResolution, maxVelocity / initialisationResolution) * initialisationResolution
+			zVelocity                 = random.randrange(- maxVelocity / initialisationResolution, maxVelocity / initialisationResolution) * initialisationResolution
+			particle.halfStepMomentum = [xVelocity, yVelocity, zVelocity]
 
 	# Zero velocity distribution
 	elif velocityDistribution == VelocityDist.zero:
 		for particle in particleList:
-			particle.velocity = [0, 0, 0]
+			particle.halfStepMomentum = [0, 0, 0]
 
 	else:
 		print 'Invalid velocity distribution selected'
@@ -265,6 +265,9 @@ def CalculateParticleAcceleration(particle, potentialField, gridResolution):
 	zAcceleration = - (potentialField[xMesh][yMesh][zNeighbours[0]] - potentialField[xMesh][yMesh][zNeighbours[1]]) / (2.0 * particle.mass)
 
 	return (xAcceleration, yAcceleration, zAcceleration)
+
+def GetF(a, omega_m = 1, omega_k = 0, omega_lambda = 0):
+	return (a**(-1)*(omega_m + omega_k * a + omega_lambda * a**3))**(-0.5)
 
 def PositionCorrect(particle, volumeLimits):
 	positionLimits = np.array(volumeLimits) / 2
