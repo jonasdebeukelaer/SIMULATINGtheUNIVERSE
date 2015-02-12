@@ -42,11 +42,12 @@ outputSystemEnergy       = True
 print "Initialising particles..."
 #particleList = pm.InitialiseParticles(volume, initialisationResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity)
 particleList = []
-particle2 = pm.Particle([4., 0., 0.], [0., 2, 0.], 1)
+particle2 = pm.Particle([-2., 0., 1.], [0., 0., 0.], 4)
 particleList.append(particle2)
 
-particle1 = pm.Particle([0., 0., 0.], [0., 0., 0.], 40)
+particle1 = pm.Particle([2., 0., -1.], [0., 0., 0.], 4)
 particleList.append(particle1)
+
 
 
 if hasCenterParticle:
@@ -115,6 +116,7 @@ while timeStep < numTimeSteps:
 	
 	if shoot:		
 		f.write("0 %d 0 %f\n" % (volume[2]/2, accumulatedEnergy))
+		print "\t", accumulatedEnergy
 
 		f.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 0., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 0.))
 		f.close()

@@ -275,8 +275,7 @@ def OutputTotalEnergy(i, particle, particleList, velocityMagnitude):
 	for j, secondParticle in enumerate(particleList):
 		if j > i:
 			separation = particle.position - secondParticle.position
-			potential  = particle.mass * secondParticle.mass / math.sqrt(separation[0]**2 + separation[1]**2 + separation[2]**2)
+			potential  = - particle.mass * secondParticle.mass / math.sqrt(separation[0]**2 + separation[1]**2 + separation[2]**2)
 
-	kinetic = velocityMagnitude * particle.mass
-
+	kinetic = 0.5 * velocityMagnitude * particle.mass
 	return (potential + kinetic)
