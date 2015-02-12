@@ -17,36 +17,31 @@ print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-volume                   = [50, 50, 50]
-initialisationResolution = 1
-gridResolution           = 1
+volume                 = [10, 10, 10]
+gridResolution         = 1
 
-numParticles             = 2
-positionDistribution     = pm.PositionDist.random
-velocityDistribution     = pm.VelocityDist.random
+numParticles           = 500
+positionDistribution   = pm.PositionDist.zeldovich
+velocityDistribution   = pm.VelocityDist.zero
 
-maxVelocity              = 1
-hasCenterParticle        = False
+maxVelocity            = 1
+hasCenterParticle      = False
 
-numTimeSteps             = 10000
-timeStepSize             = 0.01
-shootEvery               = 50
+startingA              = 0.1
+maxA                   = 1
+stepSize               = 0.01
+shootEvery             = 100
 
-outputPotentialFieldXY   = True
+outputPotentialFieldXY = False
 
 #------------------------------------------------#
 
 #------------INITIALISATION FUNCTIONS------------#
 
 print "Initialising particles..."
-#particleList = pm.InitialiseParticles(volume, initialisationResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity)
-particleList = []
-particle2 = pm.Particle([10., 0., 0.], [0., 0.8, 0.], 1)
-particleList.append(particle2)
-
-particle1 = pm.Particle([0., 0., 0.], [0., 0., 0.], 20)
-particleList.append(particle1)
-
+particleList = pm.InitialiseParticles(volume, gridResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA)
+if positionDistribution == pm.PositionDist.zeldovich:
+	numParticles = len(particleList)
 
 if hasCenterParticle:
 	centerParticle = pm.Particle([0., 24.64, 0.], [0., -1., 0.,], 20)
@@ -56,12 +51,10 @@ print"Done\n"
 
 print "Determining mesh shape..."
 densityField = pm.CalculateDensityField(volume, gridResolution, particleList, False)
-print densityField.shape
 print "Done\n"
 
 print "Calculating Green's function..."
 greensFunction = pm.CreateGreensFunction(densityField.shape)
-print greensFunction.shape
 print "Done\n"
 
 if os.path.exists("Results/values_frame0.3D"):
@@ -80,8 +73,8 @@ if os.path.exists("Results/values_frame0.3D"):
 #-----------------ITERATION LOOP-----------------#
 
 print "\nIterating..."
-timeStep = 0
-while timeStep < numTimeSteps:
+a = startingA
+while a < maxA:
 
 	shoot = True if (timeStep % shootEvery) == 0 else False
 	if shoot:
@@ -100,12 +93,8 @@ while timeStep < numTimeSteps:
 		particle.position     += np.multiply(timeStepSize, particle.velocity) + np.multiply(0.5 * timeStepSize**2, particle.acceleration)
 		pm.PositionCorrect(particle, volume)
 		particle.velocity     += np.multiply((0.5 * timeStepSize), (np.add(particle.acceleration, particleAcceleration)))
-		velocityMagnitude     =  ((particle.velocity[0])**2 + (particle.velocity[1])**2 + (particle.velocity[2])**2)
+		velocityMagnitude     =  (((particle.velocity[0])**2 + (particle.velocity[1])**2 + (particle.velocity[2])**2))**0.5
 		particle.acceleration =  particleAcceleration
-
-		#if particle.mass == 20:
-		#	particle.position = [0, 0, 0]
-		#	particle.velocity = [0, 0, 0]
 
 		if shoot:
 			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], velocityMagnitude))
@@ -119,7 +108,7 @@ while timeStep < numTimeSteps:
 
 	pm.OutputPercentage(timeStep, numTimeSteps)
 
-	timeStep += 1
+	a += stepSize
 
 	if timeStep == numTimeSteps:
 		Notifier.notify('%d time steps complete' % (numTimeSteps), title = 'User input required')
