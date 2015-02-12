@@ -30,6 +30,7 @@ hasCenterParticle      = False
 startingA              = 0.1
 maxA                   = 1.0
 stepSize               = 0.001
+
 shootEvery             = 50
 
 outputPotentialFieldXY = True
@@ -40,17 +41,10 @@ outputSystemEnergy     = True
 #------------INITIALISATION FUNCTIONS------------#
 
 print "Initialising particles..."
-#particleList = pm.InitialiseParticles(volume, gridResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA)
-#if positionDistribution == pm.PositionDist.zeldovich:
-#	numParticles = len(particleList)
-	#particleList[27].mass = 10000
-particleList = []
-particle1 = pm.Particle([4., 0., 0.], [0., 0., 0.], 20)
-particleList.append(particle1)
-
-particle2 = pm.Particle([0., 0., 0.], [0., 0., 0.], 200)
-particleList.append(particle2)
-
+particleList = pm.InitialiseParticles(volume, gridResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA)
+if positionDistribution == pm.PositionDist.zeldovich:
+	numParticles = len(particleList)
+particleList[270].mass = 10000
 
 if hasCenterParticle:
 	centerParticle = pm.Particle([0., 24.64, 0.], [0., -1., 0.,], 20)
