@@ -53,9 +53,9 @@ def ComputeDisplacementVectors(shape):
 
 				kSquare = kx**2 + ky**2 + kz**2
 				if kSquare != 0:
-					powerValue = 10**(-4)
-					ak         = math.sqrt(powerValue) * random.gauss(0., 1.) / kSquare
-					bk         = math.sprt(powerValue) * random.gauss(0., 1.) / kSquare
+					powerValue = math.sqrt(10**(-4))
+					ak         = powerValue * random.gauss(0., 1.) / kSquare
+					bk         = powerValue * random.gauss(0., 1.) / kSquare
 				else:
 					ak = 0
 					bk = 0
@@ -239,9 +239,9 @@ def SolvePotential(densityField, greensFunction, a):
 	densityFFT = densityFieldFFT()
 
 	scaledGreensFunction = np.multiply(3 / (8 * a), greensFunction)
+
 	densityFieldConvoluted = np.multiply(scaledGreensFunction, densityFFT)
 	potentialField = np.fft.irfftn(densityFieldConvoluted)
-	
 	return potentialField
 
 def FindPlusMinus(meshIndex, axisSize):
@@ -322,13 +322,12 @@ def OutputPotentialFieldXY(potentialField, particleList, volume, timeStep, gridR
 	sliceOutput.close()
 
 
-def OutputTotalEnergy(i, particle, particleList, velocityMagnitude):
+def OutputTotalEnergy(i, particle, particleList, momentumMagnitude, a):
 	potential = 0
 	for j, secondParticle in enumerate(particleList):
 		if j > i:
 			separation = particle.position - secondParticle.position
-			potential  = particle.mass * secondParticle.mass / math.sqrt(separation[0]**2 + separation[1]**2 + separation[2]**2)
+			potential  = - particle.mass * secondParticle.mass / math.sqrt((a*separation[0])**2 + (a*separation[1])**2 + (a*separation[2])**2)
 
-	kinetic = velocityMagnitude * particle.mass
-
+	kinetic = 0.5 * (momentumMagnitude**2) / particle.mass
 	return (potential + kinetic)
