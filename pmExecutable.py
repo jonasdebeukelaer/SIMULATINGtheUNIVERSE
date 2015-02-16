@@ -40,7 +40,7 @@ outputSystemEnergy     = False
 #------------INITIALISATION FUNCTIONS------------#
 
 print "Initialising particles..."
-particleList = pm.InitialiseParticles(volume, gridResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA)
+particleList = pm.InitialiseParticles(volume, gridResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA, stepSize)
 if positionDistribution == pm.PositionDist.zeldovich:
 	numParticles = len(particleList)
 particleList[270].mass = 10000
@@ -86,7 +86,7 @@ while a < maxA:
 		f.write("x y z MomentumMagnitude\n")
 
 	densityField   = pm.CalculateDensityField(volume, gridResolution, particleList)
-	potentialField = pm.SolvePotential(densityField, greensFunction)
+	potentialField = pm.SolvePotential(densityField, greensFunction, a)
 
 	accumulatedEnergy = 0
 

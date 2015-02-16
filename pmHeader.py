@@ -53,9 +53,9 @@ def ComputeDisplacementVectors(shape):
 
 				kSquare = kx**2 + ky**2 + kz**2
 				if kSquare != 0:
-					powerValue = ((kSquare**(0.5))**(-3))**(0.5)
-					ak         = powerValue * random.gauss(0., 1.) / kSquare
-					bk         = powerValue * random.gauss(0., 1.) / kSquare
+					powerValue = 10**(-4)
+					ak         = math.sqrt(powerValue) * random.gauss(0., 1.) / kSquare
+					bk         = math.sprt(powerValue) * random.gauss(0., 1.) / kSquare
 				else:
 					ak = 0
 					bk = 0
@@ -71,7 +71,7 @@ def ComputeDisplacementVectors(shape):
 
 	return (xDisplacementReal, yDisplacementReal, zDisplacementReal)
 
-def InitialiseParticles(volume, gridResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity, a):
+def InitialiseParticles(volume, gridResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity, a, deltaA):
 	particleList = []
 
 	if positionDistribution == PositionDist.zeldovich:
@@ -95,7 +95,11 @@ def InitialiseParticles(volume, gridResolution, numParticles, positionDistributi
 					y = gridY + a * (yDisplacements[i][j][k]).real
 					z = gridZ + a * (zDisplacements[i][j][k]).real
 
-					newParticle = Particle([x, y, z], [0., 0., 0.], 1)
+					xMomentum = - (a - (deltaA / 2))**2 * (xDisplacements[i][j][k]).real
+					yMomentum = - (a - (deltaA / 2))**2 * (yDisplacements[i][j][k]).real
+					zMomentum = - (a - (deltaA / 2))**2 * (zDisplacements[i][j][k]).real
+
+					newParticle = Particle([x, y, z], [xMomentum, yMomentum, zMomentum], 1)
 					particleList.append(newParticle)
 
 	else:
@@ -158,6 +162,9 @@ def InitialiseParticles(volume, gridResolution, numParticles, positionDistributi
 	elif velocityDistribution == VelocityDist.zero:
 		for particle in particleList:
 			particle.halfStepMomentum = [0, 0, 0]
+
+	elif velocityDistribution == VelocityDist.zeldovich:
+		print "Can't touch this"
 
 	else:
 		print 'Invalid velocity distribution selected'
@@ -227,11 +234,12 @@ def GetNumberOfThreads():
 
 	return threads
 
-def SolvePotential(densityField, greensFunction):
+def SolvePotential(densityField, greensFunction, a):
 	densityFieldFFT = pyfftw.builders.rfftn(densityField, threads=GetNumberOfThreads())
 	densityFFT = densityFieldFFT()
 
-	densityFieldConvoluted = np.multiply(greensFunction, densityFFT)
+	scaledGreensFunction = np.multiply(3 / (8 * a), greensFunction)
+	densityFieldConvoluted = np.multiply(scaledGreensFunction, densityFFT)
 	potentialField = np.fft.irfftn(densityFieldConvoluted)
 	
 	return potentialField
