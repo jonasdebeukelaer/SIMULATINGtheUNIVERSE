@@ -17,10 +17,10 @@ print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-volume                 = [50, 50, 50]
+volume                 = [20, 20, 20]
 gridResolution         = 1
 
-numParticles           = 2
+numParticles           = 20 * 20 * 20
 positionDistribution   = pm.PositionDist.zeldovich
 velocityDistribution   = pm.VelocityDist.zero
 
@@ -31,10 +31,10 @@ startingA              = 0.1
 maxA                   = 1.0
 stepSize               = 0.001
 
-shootEvery             = 50
+shootEvery             = 2
 
-outputPotentialFieldXY = True
-outputSystemEnergy     = True
+outputPotentialFieldXY = False
+outputSystemEnergy     = False
 
 #------------------------------------------------#
 
@@ -44,7 +44,7 @@ print "Initialising particles..."
 particleList = pm.InitialiseParticles(volume, gridResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA)
 if positionDistribution == pm.PositionDist.zeldovich:
 	numParticles = len(particleList)
-particleList[270].mass = 10000
+particleList[47].mass = 10000
 
 if hasCenterParticle:
 	centerParticle = pm.Particle([0., 24.64, 0.], [0., -1., 0.,], 20)
@@ -88,7 +88,7 @@ while frameNo < maxFrameNo:
 		f.write("x y z MomentumMagnitude\n")
 
 	densityField   = pm.CalculateDensityField(volume, gridResolution, particleList)
-	potentialField = pm.SolvePotential(densityField, greensFunction)
+	potentialField = pm.SolvePotential(densityField, greensFunction, a)
 
 	accumulatedEnergy = 0
 

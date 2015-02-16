@@ -53,7 +53,7 @@ def ComputeDisplacementVectors(shape):
 
 				kSquare = kx**2 + ky**2 + kz**2
 				if kSquare != 0:
-					powerValue = ((kSquare**(0.5))**(-3))**(0.5)
+					powerValue = math.sqrt(10**(-4))
 					ak         = powerValue * random.gauss(0., 1.) / kSquare
 					bk         = powerValue * random.gauss(0., 1.) / kSquare
 				else:
@@ -227,13 +227,14 @@ def GetNumberOfThreads():
 
 	return threads
 
-def SolvePotential(densityField, greensFunction):
+def SolvePotential(densityField, greensFunction, a):
 	densityFieldFFT = pyfftw.builders.rfftn(densityField, threads=GetNumberOfThreads())
 	densityFFT = densityFieldFFT()
 
-	densityFieldConvoluted = np.multiply(greensFunction, densityFFT)
+	scaledGreensFunction = np.multiply(3 / (8 * a), greensFunction)
+
+	densityFieldConvoluted = np.multiply(scaledGreensFunction, densityFFT)
 	potentialField = np.fft.irfftn(densityFieldConvoluted)
-	
 	return potentialField
 
 def FindPlusMinus(meshIndex, axisSize):
@@ -321,5 +322,5 @@ def OutputTotalEnergy(i, particle, particleList, momentumMagnitude, a):
 			separation = particle.position - secondParticle.position
 			potential  = - particle.mass * secondParticle.mass / math.sqrt((a*separation[0])**2 + (a*separation[1])**2 + (a*separation[2])**2)
 
-	kinetic = 0.5 * momentumMagnitude / particle.mass
+	kinetic = 0.5 * (momentumMagnitude**2) / particle.mass
 	return (potential + kinetic)
