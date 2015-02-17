@@ -20,9 +20,9 @@ print "Done\n"
 volume                 = [20, 20, 20]
 gridResolution         = 1
 
-numParticles           = 20 * 20 * 20
+numParticles           = 0
 positionDistribution   = pm.PositionDist.zeldovich
-velocityDistribution   = pm.VelocityDist.zero
+velocityDistribution   = pm.VelocityDist.zeldovich
 
 maxVelocity            = 1
 hasCenterParticle      = False
@@ -44,7 +44,6 @@ print "Initialising particles..."
 particleList = pm.InitialiseParticles(volume, gridResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA, stepSize)
 if positionDistribution == pm.PositionDist.zeldovich:
 	numParticles = len(particleList)
-particleList[47].mass = 10000
 
 if hasCenterParticle:
 	centerParticle = pm.Particle([0., 24.64, 0.], [0., -1., 0.,], 20)
@@ -107,9 +106,10 @@ while frameNo < maxFrameNo:
 				accumulatedEnergy += pm.OutputTotalEnergy(i, particle, particleList, momentumMagnitude, a)
 
 	
-	if shoot:		
-		f.write("0 %d 0 %f\n" % (volume[2]/2, accumulatedEnergy))
-		print "\t", accumulatedEnergy
+	if shoot:	
+		if outputSystemEnergy:	
+			f.write("0 %d 0 %f\n" % (volume[2]/2, accumulatedEnergy))
+			print "\t", accumulatedEnergy
 
 		f.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 0., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 0.))
 		f.close()
