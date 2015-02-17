@@ -53,7 +53,7 @@ def ComputeDisplacementVectors(shape):
 
 				kSquare = kx**2 + ky**2 + kz**2
 				if kSquare != 0:
-					powerValue = math.sqrt(10**(-4))
+					powerValue = 10**(-4)
 					ak         = powerValue * random.gauss(0., 1.) / kSquare
 					bk         = powerValue * random.gauss(0., 1.) / kSquare
 				else:

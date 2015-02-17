@@ -34,7 +34,8 @@ stepSize               = 0.001
 shootEvery             = 2
 
 outputPotentialFieldXY = False
-outputSystemEnergy     = False
+outputSystemEnergy     = True
+outputDensityField     = False
 
 #------------------------------------------------#
 
@@ -44,7 +45,7 @@ print "Initialising particles..."
 particleList = pm.InitialiseParticles(volume, gridResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA, stepSize)
 if positionDistribution == pm.PositionDist.zeldovich:
 	numParticles = len(particleList)
-particleList[47].mass = 10000
+particleList[4210].mass = 1000
 
 if hasCenterParticle:
 	centerParticle = pm.Particle([0., 24.64, 0.], [0., -1., 0.,], 20)
@@ -65,12 +66,15 @@ if os.path.exists("Results/values_frame0.3D"):
 	deleteFiles = raw_input("Would you like to delete yo motherflippin results from the last test, you       simpleton? (y/n): ")
 	print '\n'
 	if deleteFiles == 'y':
-		fileList = glob.glob("Results/*.3D")
+		fileList          = glob.glob("Results/*.3D")
 		potentialFileList = glob.glob("PotentialResults/*.3D")
+		densityFileList   = glob.glob("DensityResults/*.3D")
 		for resultFile in fileList:
 			os.remove(resultFile)
 		for potentialFile in potentialFileList:
 			os.remove(potentialFile)
+		for densityFile in densityFileList:
+			os.remove(densityFile)
 
 #------------------------------------------------#
 
@@ -101,15 +105,32 @@ while frameNo < maxFrameNo:
 		pm.PositionCorrect(particle, volume)
 
 		if shoot:
-			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], momentumMagnitude))
+			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], 0.2))
 
 			if outputSystemEnergy:
 				accumulatedEnergy += pm.OutputTotalEnergy(i, particle, particleList, momentumMagnitude, a)
 
 	
-	if shoot:		
-		f.write("0 %d 0 %f\n" % (volume[2]/2, accumulatedEnergy))
-		print "\t", accumulatedEnergy
+	if shoot:
+		if outputSystemEnergy:	
+			f.write("0 %d 0 %f\n" % (volume[2]/2, accumulatedEnergy))
+			print "\t", accumulatedEnergy
+
+		if outputDensityField:
+			densityFile = open("Densityresults/density_frame%d.3D" % (frameNo), "w")
+			densityFile.write("x y z Density\n")
+
+			for i in range(0, volume[0]):
+				for j in range(0, volume[1]):
+					for k in range(0, volume[2]):
+						cellDensity = densityField[i][j][k]
+						if cellDensity != 0:
+							cellDensity -= 990 if cellDensity >= 1000 else cellDensity 
+							if cellDensity != 0:
+								densityFile.write("%f %f %f %f\n" % (i-(volume[0]/2-1), j-(volume[1]/2-1), k-(volume[2]/2-1), math.log(abs(cellDensity))))
+
+			densityFile.close()
+
 
 		f.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 0., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 0.))
 		f.close()
