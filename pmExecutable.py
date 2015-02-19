@@ -17,7 +17,7 @@ print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-volume                 = [50, 50, 50]
+volume                 = [20, 20, 20]
 gridResolution         = 1
 
 numParticles           = 0
@@ -27,11 +27,11 @@ velocityDistribution   = pm.VelocityDist.zeldovich
 maxVelocity            = 1
 hasCenterParticle      = False
 
-startingA              = 0.100
-maxA                   = 1.000
-stepSize               = 0.001
+startingA              = 0.1000
+maxA                   = 1.0000
+stepSize               = 0.0001
 
-shootEvery             = 2
+shootEvery             = 50
 
 outputPotentialFieldXY = False
 outputSystemEnergy     = False
