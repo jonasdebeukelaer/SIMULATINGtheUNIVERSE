@@ -17,24 +17,28 @@ print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-volume                 = [20, 20, 20]
+volume                 = [10, 10, 10]
 gridResolution         = 1
 
 numParticles           = 0
 positionDistribution   = pm.PositionDist.zeldovich
 velocityDistribution   = pm.VelocityDist.zeldovich
 
+preComputeGreens       = False
+
 maxVelocity            = 1
 hasCenterParticle      = False
 
-startingA              = 0.1
-maxA                   = 1.0
-stepSize               = 0.001
+startingA              = 0.100
+maxA                   = 1.000
+stepSize               = 0.002
 
 shootEvery             = 2
 
+#----------------DEBUG PARAMETERS----------------#
+
 outputPotentialFieldXY = False
-outputSystemEnergy     = True
+outputSystemEnergy     = False
 outputDensityField     = False
 
 #------------------------------------------------#
@@ -45,7 +49,7 @@ print "Initialising particles..."
 particleList = pm.InitialiseParticles(volume, gridResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA, stepSize)
 if positionDistribution == pm.PositionDist.zeldovich:
 	numParticles = len(particleList)
-particleList[4210].mass = 1000
+#particleList[4210].mass = 1000
 
 if hasCenterParticle:
 	centerParticle = pm.Particle([0., 24.64, 0.], [0., -1., 0.,], 20)
@@ -57,9 +61,12 @@ print "Determining mesh shape..."
 densityField = pm.CalculateDensityField(volume, gridResolution, particleList, False)
 print "Done\n"
 
-print "Calculating Green's function..."
-greensFunction = pm.CreateGreensFunction(densityField.shape)
-print "Done\n"
+if preComputeGreens:
+	print "Calculating Green's function..."
+	greensFunction = pm.CreateGreensFunction(densityField.shape)
+	print "Done\n"
+else:
+	greensFunction = 0
 
 if os.path.exists("Results/values_frame0.3D"):
 	Notifier.notify('You should probably make them not exist...', title = 'Results still exist')
@@ -80,8 +87,15 @@ if os.path.exists("Results/values_frame0.3D"):
 
 #-----------------ITERATION LOOP-----------------#
 
+initial = open("Results/values_initialframe.3D", "w")
+initial.write("x y z MomentumMagnitude\n")
+for particle in particleList:
+	initial.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], 0))
+initial.close()
+
 print "Iterating..."
 a = startingA
+iterationStart = time.time()
 frameNo = 0
 maxFrameNo = int((maxA - startingA) / stepSize)
 while frameNo < maxFrameNo:
@@ -92,7 +106,7 @@ while frameNo < maxFrameNo:
 		f.write("x y z MomentumMagnitude\n")
 
 	densityField   = pm.CalculateDensityField(volume, gridResolution, particleList)
-	potentialField = pm.SolvePotential(densityField, greensFunction, a)
+	potentialField = pm.SolvePotential(densityField, a, greensFunction, preComputeGreens)
 
 	accumulatedEnergy = 0
 
@@ -105,7 +119,7 @@ while frameNo < maxFrameNo:
 		pm.PositionCorrect(particle, volume)
 
 		if shoot:
-			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], 0.2))
+			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], momentumMagnitude))
 	
 	if shoot:
 		if outputSystemEnergy:	
@@ -122,7 +136,7 @@ while frameNo < maxFrameNo:
 		f.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 0., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 0.))
 		f.close()
 
-	pm.OutputPercentage(frameNo, (maxA - startingA) / stepSize)
+	pm.OutputPercentage(frameNo, (maxA - startingA) / stepSize, time.time()-start)
 
 	a       += stepSize
 	frameNo += 1
@@ -130,14 +144,14 @@ while frameNo < maxFrameNo:
 		Notifier.notify('a = %.3f reached' % (a), title = 'User input required')
 		moreSteps = raw_input("\n\nPlease check your VisIt output... would you like to increase max A (currently at a = %.3f)? (y/n): " % (a))
 		if moreSteps == 'y':
-			maxA = int(raw_input("\nInput new max a: "))
-			maxFrameNo = int((maxA - startingA) / stepSize)
+			maxA = float(raw_input("\nInput new max a: "))
+			maxFrameNo = int(float(maxA - startingA) / float(stepSize))
 			sys.stdout.write("\n")
 
 #------------------------------------------------#
 
 end = time.time()
 sys.stdout.write("\n")
-sys.stdout.write("Simulation time = %fs\n\n" % (end - start))
+sys.stdout.write("Simulation time = %fs\n\n" % (end - iterationStart))
 
 Notifier.notify('The universe has been solved', title = 'Thanks to the finest minds of the 21st century...')

@@ -53,7 +53,7 @@ def ComputeDisplacementVectors(shape):
 
 				kSquare = kx**2 + ky**2 + kz**2
 				if kSquare != 0:
-					powerValue = 10**(-4)
+					powerValue = 10**(4)
 					ak         = powerValue * random.gauss(0., 1.) / kSquare
 					bk         = powerValue * random.gauss(0., 1.) / kSquare
 				else:
@@ -101,6 +101,7 @@ def InitialiseParticles(volume, gridResolution, numParticles, positionDistributi
 					zMomentum = - (a - (deltaA / 2))**2 * (zDisplacements[i][j][k]).real
 
 					newParticle = Particle([x, y, z], [xMomentum, yMomentum, zMomentum], 1)
+					PositionCorrect(newParticle, volume)
 					particleList.append(newParticle)
 
 		numBins = 100
@@ -219,7 +220,7 @@ def CalculateDensityField(volume, gridResolution, particleList, populateArray = 
 	return densityFieldMesh
 
 def CreateGreensFunction(unalteredShape):
-	shape       = (unalteredShape[0], unalteredShape[1], unalteredShape[2] / 2 + 1)
+	shape       = (unalteredShape[0], unalteredShape[1], unalteredShape[2] / 2 + 1)	
 	greensArray = np.zeros((shape))
 
 	constant = 1
@@ -241,9 +242,36 @@ def CreateGreensFunction(unalteredShape):
 
 				if l != 0 or m != 0 or n != 0:
 					greensArray[l][m][n] = - constant / ((math.sin(kx * 0.5))**2 + (math.sin(ky * 0.5))**2 + (math.sin(kz * 0.5))**2)
-				
+
 	return greensArray
 		
+def InlineGreensConvolution(densityFFT, a):
+	shape = densityFFT.shape
+	convolutedDensity = np.zeros((shape), dtype='complex128')
+
+	constant = 3 / (8 * a)
+
+	for l in range(0, shape[0]):
+		if l < (shape[0] / 2):
+			kx = 2 * math.pi * l / (shape[0])
+		else:
+			kx = 2 * math.pi * (l - shape[0]) / (shape[0])
+
+		for m in range(0, shape[1]):
+			if m < (shape[1] / 2):
+				ky = 2 * math.pi * m / (shape[1])
+			else:
+				ky = 2 * math.pi * (m - shape[1]) / (shape[1])
+
+			for n in range(0, shape[2]):
+				kz = math.pi * n / (shape[2])
+
+				if l != 0 or m != 0 or n != 0:
+					greensValue = - constant / ((math.sin(kx * 0.5))**2 + (math.sin(ky * 0.5))**2 + (math.sin(kz * 0.5))**2)
+					convolutedDensity[l][m][n] = greensValue * densityFFT[l][m][n]
+
+	return convolutedDensity
+
 def GetNumberOfThreads():
 	user = os.getlogin()
 	if user == "oliclipsham":
@@ -256,13 +284,16 @@ def GetNumberOfThreads():
 
 	return threads
 
-def SolvePotential(densityField, greensFunction, a):
+def SolvePotential(densityField, a, greensFunction, preComputeGreens):
 	densityFieldFFT = pyfftw.builders.rfftn(densityField, threads=GetNumberOfThreads())
 	densityFFT = densityFieldFFT()
 
-	scaledGreensFunction = np.multiply(3 / (8 * a), greensFunction)
+	if not preComputeGreens:
+		densityFieldConvoluted = InlineGreensConvolution(densityFFT, a)
+	else:
+		scaledGreensFunction = np.multiply(3 / (8 * a), greensFunction)
+		densityFieldConvoluted = np.multiply(scaledGreensFunction, densityFFT)
 
-	densityFieldConvoluted = np.multiply(scaledGreensFunction, densityFFT)
 	potentialField = np.fft.irfftn(densityFieldConvoluted)
 	return potentialField
 
@@ -307,9 +338,13 @@ def PositionCorrect(particle, volumeLimits):
 		elif position < (- positionLimits[index]):
 			particle.position[index] = position + volumeLimits[index]
 
-def OutputPercentage(timeStep, numTimeSteps):
+def OutputPercentage(timeStep, numTimeSteps, timeElapsed):
 	i = (float(timeStep + 1) / numTimeSteps) * 100
-	sys.stdout.write("\r%.2f%%" % i)
+	timeLeft = timeElapsed * ((100. / i) - 1)
+	hours = math.floor(timeLeft / 3600.)
+	minutes = math.floor((timeLeft % 3600) / 60.)
+	seconds = timeLeft % 60
+	sys.stdout.write("\r%.2f%% - Estimated time remaining: %02d:%02d:%02d" % (i, hours, minutes, seconds))
 	sys.stdout.flush()
 
 def OutputPotentialFieldXY(potentialField, particleList, volume, timeStep, gridResolution):
