@@ -17,7 +17,7 @@ print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-volume                 = [20, 20, 20]
+volume                 = [50, 50, 50]
 gridResolution         = 1
 
 numParticles           = 0
@@ -27,8 +27,8 @@ velocityDistribution   = pm.VelocityDist.zeldovich
 maxVelocity            = 1
 hasCenterParticle      = False
 
-startingA              = 0.1
-maxA                   = 1.0
+startingA              = 0.100
+maxA                   = 1.000
 stepSize               = 0.001
 
 shootEvery             = 2
@@ -75,6 +75,12 @@ if os.path.exists("Results/values_frame0.3D"):
 
 #-----------------ITERATION LOOP-----------------#
 
+initial = open("Results/values_initialframe.3D", "w")
+initial.write("x y z MomentumMagnitude\n")
+for particle in particleList:
+	initial.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], 0))
+initial.close()
+
 print "Iterating..."
 a = startingA
 frameNo = 0
@@ -117,7 +123,7 @@ while frameNo < maxFrameNo:
 		if outputPotentialFieldXY:
 			pm.OutputPotentialFieldXY(potentialField, particleList, volume, frameNo, gridResolution)
 
-	pm.OutputPercentage(frameNo, (maxA - startingA) / stepSize)
+	pm.OutputPercentage(frameNo, (maxA - startingA) / stepSize, time.time() - start)
 
 	a       += stepSize
 	frameNo += 1
@@ -125,8 +131,8 @@ while frameNo < maxFrameNo:
 		Notifier.notify('a = %.3f reached' % (a), title = 'User input required')
 		moreSteps = raw_input("\n\nPlease check your VisIt output... would you like to increase max A (currently at a = %.3f)? (y/n): " % (a))
 		if moreSteps == 'y':
-			maxA = int(raw_input("\nInput new max a: "))
-			maxFrameNo = int((maxA - startingA) / stepSize)
+			maxA = float(raw_input("\nInput new max a: "))
+			maxFrameNo = int(float(maxA - startingA) / float(stepSize))
 			sys.stdout.write("\n")
 
 #------------------------------------------------#

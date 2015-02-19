@@ -53,7 +53,7 @@ def ComputeDisplacementVectors(shape):
 
 				kSquare = kx**2 + ky**2 + kz**2
 				if kSquare != 0:
-					powerValue = 10**(-4)
+					powerValue = 10**(4)
 					ak         = powerValue * random.gauss(0., 1.) / kSquare
 					bk         = powerValue * random.gauss(0., 1.) / kSquare
 				else:
@@ -100,6 +100,7 @@ def InitialiseParticles(volume, gridResolution, numParticles, positionDistributi
 					zMomentum = - (a - (deltaA / 2))**2 * (zDisplacements[i][j][k]).real
 
 					newParticle = Particle([x, y, z], [xMomentum, yMomentum, zMomentum], 1)
+					PositionCorrect(newParticle, volume)
 					particleList.append(newParticle)
 
 	else:
@@ -285,9 +286,12 @@ def PositionCorrect(particle, volumeLimits):
 		elif position < (- positionLimits[index]):
 			particle.position[index] = position + volumeLimits[index]
 
-def OutputPercentage(timeStep, numTimeSteps):
+def OutputPercentage(timeStep, numTimeSteps, timeElapsed):
 	i = (float(timeStep + 1) / numTimeSteps) * 100
-	sys.stdout.write("\r%.2f%%" % i)
+	timeLeft = timeElapsed * ((100. / i) - 1)
+	minutes = floor(timeLeft / 60.)
+	seconds = timeLeft % 60
+	sys.stdout.write("\r%.2f%%\nEstimated time remaining: %d:%d" % i, minutes, seconds)
 	sys.stdout.flush()
 
 def OutputPotentialFieldXY(potentialField, particleList, volume, timeStep, gridResolution):
