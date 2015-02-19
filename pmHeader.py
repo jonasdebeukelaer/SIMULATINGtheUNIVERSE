@@ -81,6 +81,7 @@ def InitialiseParticles(volume, gridResolution, numParticles, positionDistributi
 		yDisplacements = displacementVectors[1]
 		zDisplacements = displacementVectors[2]
 
+
 		gridX = - (volume[0] / gridResolution) / 2
 		for i in range(0, volume[0] / gridResolution):
 			gridX += gridResolution
@@ -102,6 +103,27 @@ def InitialiseParticles(volume, gridResolution, numParticles, positionDistributi
 					newParticle = Particle([x, y, z], [xMomentum, yMomentum, zMomentum], 1)
 					PositionCorrect(newParticle, volume)
 					particleList.append(newParticle)
+
+		numBins = 100
+		xbins = [0] * 100
+		ybins = [0] * 100
+		zbins = [0] * 100
+		s = [0 * 100]
+		
+		for i in range(0, len(particleList)):
+			xbins[int(particleList[i].position[0]*5)] += 1
+			ybins[int(particleList[i].position[1]*5)] += 1
+			zbins[int(particleList[i].position[2]*5)] += 1
+
+
+		a = open('seeDisplacementDistribution.txt', 'w')
+		a.write('s \tx \ty \tz\n')
+
+		for i in range(0, numBins):
+			s = i / 5 - numBins / 5 / 2
+			a.write('%d \t%d \t%d \t%d\n' % (s, xbins[i], ybins[i], zbins[i]))
+
+		a.close()
 
 	else:
 		for i in range(0, numParticles):
@@ -198,7 +220,7 @@ def CalculateDensityField(volume, gridResolution, particleList, populateArray = 
 	return densityFieldMesh
 
 def CreateGreensFunction(unalteredShape):
-	shape       = (unalteredShape[0], unalteredShape[1], unalteredShape[2] / 2 + 1)
+	shape       = (unalteredShape[0], unalteredShape[1], unalteredShape[2] / 2 + 1)	
 	greensArray = np.zeros((shape))
 
 	constant = 1
@@ -220,9 +242,36 @@ def CreateGreensFunction(unalteredShape):
 
 				if l != 0 or m != 0 or n != 0:
 					greensArray[l][m][n] = - constant / ((math.sin(kx * 0.5))**2 + (math.sin(ky * 0.5))**2 + (math.sin(kz * 0.5))**2)
-				
+
 	return greensArray
 		
+def InlineGreensConvolution(densityFFT, a):
+	shape = densityFFT.shape
+	convolutedDensity = np.zeros((shape), dtype='complex128')
+
+	constant = 3 / (8 * a)
+
+	for l in range(0, shape[0]):
+		if l < (shape[0] / 2):
+			kx = 2 * math.pi * l / (shape[0])
+		else:
+			kx = 2 * math.pi * (l - shape[0]) / (shape[0])
+
+		for m in range(0, shape[1]):
+			if m < (shape[1] / 2):
+				ky = 2 * math.pi * m / (shape[1])
+			else:
+				ky = 2 * math.pi * (m - shape[1]) / (shape[1])
+
+			for n in range(0, shape[2]):
+				kz = math.pi * n / (shape[2])
+
+				if l != 0 or m != 0 or n != 0:
+					greensValue = - constant / ((math.sin(kx * 0.5))**2 + (math.sin(ky * 0.5))**2 + (math.sin(kz * 0.5))**2)
+					convolutedDensity[l][m][n] = greensValue * densityFFT[l][m][n]
+
+	return convolutedDensity
+
 def GetNumberOfThreads():
 	user = os.getlogin()
 	if user == "oliclipsham":
@@ -235,13 +284,16 @@ def GetNumberOfThreads():
 
 	return threads
 
-def SolvePotential(densityField, greensFunction, a):
+def SolvePotential(densityField, a, greensFunction, preComputeGreens):
 	densityFieldFFT = pyfftw.builders.rfftn(densityField, threads=GetNumberOfThreads())
 	densityFFT = densityFieldFFT()
 
-	scaledGreensFunction = np.multiply(3 / (8 * a), greensFunction)
+	if not preComputeGreens:
+		densityFieldConvoluted = InlineGreensConvolution(densityFFT, a)
+	else:
+		scaledGreensFunction = np.multiply(3 / (8 * a), greensFunction)
+		densityFieldConvoluted = np.multiply(scaledGreensFunction, densityFFT)
 
-	densityFieldConvoluted = np.multiply(scaledGreensFunction, densityFFT)
 	potentialField = np.fft.irfftn(densityFieldConvoluted)
 	return potentialField
 
@@ -289,9 +341,10 @@ def PositionCorrect(particle, volumeLimits):
 def OutputPercentage(timeStep, numTimeSteps, timeElapsed):
 	i = (float(timeStep + 1) / numTimeSteps) * 100
 	timeLeft = timeElapsed * ((100. / i) - 1)
-	minutes = floor(timeLeft / 60.)
+	hours = math.floor(timeLeft / 3600.)
+	minutes = math.floor((timeLeft % 3600) / 60.)
 	seconds = timeLeft % 60
-	sys.stdout.write("\r%.2f%%\nEstimated time remaining: %d:%d" % i, minutes, seconds)
+	sys.stdout.write("\r%.2f%% - Estimated time remaining: %02d:%02d:%02d" % (i, hours, minutes, seconds))
 	sys.stdout.flush()
 
 def OutputPotentialFieldXY(potentialField, particleList, volume, timeStep, gridResolution):
@@ -310,10 +363,9 @@ def OutputPotentialFieldXY(potentialField, particleList, volume, timeStep, gridR
 
 	for i in range(0, int(volume[0]/gridResolution)):
 		for j in range(0, int(volume[1]/gridResolution)):
-			for k in range(0, int(volume[2]/gridResolution)):
-				potentialValue = potentialField[i][j][0]
-				if i % 4 == 0 and j % 4 == 0:	
-					sliceOutput.write("%f %f 0 %f\n" % (i*gridResolution-((volume[0]/2)), j*gridResolution-((volume[1]/2)), potentialValue))
+			potentialValue = potentialField[i][j][0]
+			if i % 4 == 0 and j % 4 == 0:	
+				sliceOutput.write("%f %f 0 %f\n" % (i*gridResolution-((volume[0]/2)), j*gridResolution-((volume[1]/2)), potentialValue))
 
 
 	for particle in particleList:
@@ -326,12 +378,34 @@ def OutputPotentialFieldXY(potentialField, particleList, volume, timeStep, gridR
 	sliceOutput.close()
 
 
-def OutputTotalEnergy(i, particle, particleList, momentumMagnitude, a):
+def OutputTotalEnergy(particleList, potentialField, a, stepSize, volume):
+	
 	potential = 0
-	for j, secondParticle in enumerate(particleList):
-		if j > i:
-			separation = particle.position - secondParticle.position
-			potential  = - particle.mass * secondParticle.mass / math.sqrt((a*separation[0])**2 + (a*separation[1])**2 + (a*separation[2])**2)
+	for particle in particleList:
+		xIndex = FindMeshIndex(particle.position[0], 1, volume[0])
+		yIndex = FindMeshIndex(particle.position[1], 1, volume[1])
+		zIndex = FindMeshIndex(particle.position[2], 1, volume[2])
 
-	kinetic = 0.5 * (momentumMagnitude**2) / particle.mass
-	return (potential + kinetic)
+		potential += potentialField[xIndex][yIndex][zIndex] * particle.mass
+
+
+	potentialE  = 0.5 * potential
+
+	totalMoms = [(part.halfStepMomentum[0]**2 + part.halfStepMomentum[1]**2 + part.halfStepMomentum[2]**2) * part.mass for part in particleList]
+	kinetic = sum(np.multiply(0.5 / (a + stepSize/2)**2, totalMoms))
+	return (potentialE + kinetic)
+
+def OutputDensityField(volume, densityField):
+	densityFile = open("Densityresults/density_frame%d.3D" % (frameNo), "w")
+	densityFile.write("x y z Density\n")
+
+	for i in range(0, volume[0]):
+		for j in range(0, volume[1]):
+			for k in range(0, volume[2]):
+				cellDensity = densityField[i][j][k]
+				if cellDensity != 0:
+					cellDensity -= 990 if cellDensity >= 1000 else cellDensity 
+					if cellDensity != 0:
+						densityFile.write("%f %f %f %f\n" % (i-(volume[0]/2-1), j-(volume[1]/2-1), k-(volume[2]/2-1), math.log(abs(cellDensity))))
+
+	densityFile.close()
