@@ -18,7 +18,8 @@ print "Done\n"
 #------------INITIALISATION PARAMETERS-----------#
 
 volume                 = [10, 10, 10]
-gridResolution         = 1
+gridResolution         = 0.2
+Lbox 				   = 14000
 
 numParticles           = 0
 positionDistribution   = pm.PositionDist.zeldovich
@@ -29,7 +30,7 @@ preComputeGreens       = False
 maxVelocity            = 1
 hasCenterParticle      = False
 
-startingA              = 0.100
+startingA              = 0.010
 maxA                   = 1.000
 stepSize               = 0.002
 
@@ -46,7 +47,7 @@ outputDensityField     = False
 #------------INITIALISATION FUNCTIONS------------#
 
 print "Initialising particles..."
-particleList = pm.InitialiseParticles(volume, gridResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA, stepSize)
+particleList = pm.InitialiseParticles(volume, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA, stepSize, Lbox)
 if positionDistribution == pm.PositionDist.zeldovich:
 	numParticles = len(particleList)
 #particleList[4210].mass = 1000
