@@ -12,12 +12,12 @@ from pync import Notifier
 
 start = time.time()
 print "Seeding..."
-random.seed(89321)
+random.seed(64339)
 print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-volume                 = [20, 20, 20]
+volume                 = [10, 10, 10]
 gridResolution         = 1
 
 numParticles           = 0
@@ -29,15 +29,15 @@ preComputeGreens       = False
 maxVelocity            = 1
 hasCenterParticle      = False
 
-startingA              = 0.1000
+startingA              = 0.0100
 maxA                   = 1.0000
 stepSize               = 0.0001
 
-shootEvery             = 50
+shootEvery             = 10
 
 #----------------DEBUG PARAMETERS----------------#
 
-outputPotentialFieldXY = False
+outputPotentialFieldXY = True
 outputSystemEnergy     = False
 outputDensityField     = False
 

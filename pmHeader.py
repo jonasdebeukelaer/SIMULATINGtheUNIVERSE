@@ -28,7 +28,8 @@ class VelocityDist(Enum):
 	zero      = 2
 	zeldovich = 3
 
-def ComputeDisplacementVectors(shape):
+def ComputeDisplacementVectors(unalteredShape):
+	shape                = (unalteredShape[0], unalteredShape[1], unalteredShape[2] / 2 + 1)
 	xDisplacementFourier = np.zeros((shape), dtype = 'complex128')
 	yDisplacementFourier = np.zeros((shape), dtype = 'complex128')
 	zDisplacementFourier = np.zeros((shape), dtype = 'complex128')
@@ -46,14 +47,11 @@ def ComputeDisplacementVectors(shape):
 				ky = 2 * math.pi * (m - shape[1]) / (shape[1])
 
 			for n in range(0, shape[2]):
-				if m < (shape[1] / 2):
-					kz = 2 * math.pi * n / (shape[2])
-				else:
-					kz = 2 * math.pi * (n - shape[2]) / (shape[2])
+				kz = math.pi * n / (shape[2])
 
 				kSquare = kx**2 + ky**2 + kz**2
 				if kSquare != 0:
-					powerValue = 10**(4)
+					powerValue = 10**(-4) * math.sqrt(math.sqrt(kSquare))
 					ak         = powerValue * random.gauss(0., 1.) / kSquare
 					bk         = powerValue * random.gauss(0., 1.) / kSquare
 				else:
@@ -65,9 +63,9 @@ def ComputeDisplacementVectors(shape):
 				yDisplacementFourier[l][m][n] = ck * ky
 				zDisplacementFourier[l][m][n] = ck * kz
 
-	xDisplacementReal = np.fft.ifftn(xDisplacementFourier)
-	yDisplacementReal = np.fft.ifftn(yDisplacementFourier)
-	zDisplacementReal = np.fft.ifftn(zDisplacementFourier)
+	xDisplacementReal = np.fft.irfftn(xDisplacementFourier)
+	yDisplacementReal = np.fft.irfftn(yDisplacementFourier)
+	zDisplacementReal = np.fft.irfftn(zDisplacementFourier)
 
 	return (xDisplacementReal, yDisplacementReal, zDisplacementReal)
 
@@ -96,14 +94,15 @@ def InitialiseParticles(volume, gridResolution, numParticles, positionDistributi
 					y = gridY + a * (yDisplacements[i][j][k]).real
 					z = gridZ + a * (zDisplacements[i][j][k]).real
 
-					xMomentum = - (a - (deltaA / 2))**2 * (xDisplacements[i][j][k]).real
-					yMomentum = - (a - (deltaA / 2))**2 * (yDisplacements[i][j][k]).real
-					zMomentum = - (a - (deltaA / 2))**2 * (zDisplacements[i][j][k]).real
+					xMomentum = - (a - (deltaA / 2))**2 * xDisplacements[i][j][k]
+					yMomentum = - (a - (deltaA / 2))**2 * yDisplacements[i][j][k]
+					zMomentum = - (a - (deltaA / 2))**2 * zDisplacements[i][j][k]
 
 					newParticle = Particle([x, y, z], [xMomentum, yMomentum, zMomentum], 1)
 					PositionCorrect(newParticle, volume)
 					particleList.append(newParticle)
 
+		'''
 		numBins = 100
 		xbins = [0] * 100
 		ybins = [0] * 100
@@ -124,6 +123,7 @@ def InitialiseParticles(volume, gridResolution, numParticles, positionDistributi
 			a.write('%d \t%d \t%d \t%d\n' % (s, xbins[i], ybins[i], zbins[i]))
 
 		a.close()
+		'''
 
 	else:
 		for i in range(0, numParticles):
@@ -343,7 +343,7 @@ def OutputPercentage(timeStep, numTimeSteps, timeElapsed):
 	timeLeft = timeElapsed * ((100. / i) - 1)
 	hours = math.floor(timeLeft / 3600.)
 	minutes = math.floor((timeLeft % 3600) / 60.)
-	seconds = timeLeft % 60
+	seconds = (timeLeft % 60.) + 0.5
 	sys.stdout.write("\r%.2f%% - Estimated time remaining: %02d:%02d:%02d" % (i, hours, minutes, seconds))
 	sys.stdout.flush()
 
