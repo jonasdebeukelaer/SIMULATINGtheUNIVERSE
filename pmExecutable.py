@@ -34,7 +34,7 @@ startingA              = 0.010
 maxA                   = 1.000
 stepSize               = 0.002
 
-shootEvery             = 2
+shootEvery             = 50
 
 #----------------DEBUG PARAMETERS----------------#
 
