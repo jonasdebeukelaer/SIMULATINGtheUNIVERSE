@@ -28,32 +28,31 @@ class VelocityDist(Enum):
 	zero      = 2
 	zeldovich = 3
 
-def ComputeDisplacementVectors(unalteredShape):
-	shape                = (unalteredShape[0], unalteredShape[1], unalteredShape[2] / 2 + 1)
+def ComputeDisplacementVectors(shape, Lbox):
 	xDisplacementFourier = np.zeros((shape), dtype = 'complex128')
 	yDisplacementFourier = np.zeros((shape), dtype = 'complex128')
 	zDisplacementFourier = np.zeros((shape), dtype = 'complex128')
 
 	for l in range(0, shape[0]):
 		if l < (shape[0] / 2):
-			kx = 2 * math.pi * l / (shape[0])
+			kx = 2 * math.pi * l
 		else:
-			kx = 2 * math.pi * (l - shape[0]) / (shape[0])
+			kx = 2 * math.pi * (l - shape[0])
 
 		for m in range(0, shape[1]):
 			if m < (shape[1] / 2):
-				ky = 2 * math.pi * m / (shape[1])
+				ky = 2 * math.pi * m
 			else:
-				ky = 2 * math.pi * (m - shape[1]) / (shape[1])
+				ky = 2 * math.pi * (m - shape[1])
 
-			for n in range(0, shape[2]):
-				kz = math.pi * n / (shape[2])
+			for n in range(0, (shape[2] / 2) + 1):
+				kz = 2 * math.pi * n
 
-				kSquare = kx**2 + ky**2 + kz**2
+				kSquare = float(kx**2 + ky**2 + kz**2)
 				if kSquare != 0:
-					powerValue = 10**(-4) * math.sqrt(math.sqrt(kSquare))
-					ak         = powerValue * random.gauss(0., 1.) / kSquare
-					bk         = powerValue * random.gauss(0., 1.) / kSquare
+					powerValue = 10**(-4.5) * (math.sqrt(kSquare)/ (Lbox * 0.05))**(0.5)
+					ak         = powerValue * random.gauss(0., 1.) / (math.sqrt(2) * (kSquare / Lbox**(2)))
+					bk         = powerValue * random.gauss(0., 1.) / (math.sqrt(2) * (kSquare / Lbox**(2)))
 				else:
 					ak = 0
 					bk = 0
@@ -69,61 +68,37 @@ def ComputeDisplacementVectors(unalteredShape):
 
 	return (xDisplacementReal, yDisplacementReal, zDisplacementReal)
 
-def InitialiseParticles(volume, gridResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity, a, deltaA):
+def InitialiseParticles(volume, numParticles, positionDistribution, velocityDistribution, maxVelocity, a, deltaA, Lbox):
 	particleList = []
 
 	if positionDistribution == PositionDist.zeldovich:
 
-		displacementVectors = ComputeDisplacementVectors(volume)
-		xDisplacements = displacementVectors[0]
-		yDisplacements = displacementVectors[1]
-		zDisplacements = displacementVectors[2]
+		displacementVectors = ComputeDisplacementVectors(volume, Lbox)
+		xDisplacements = (displacementVectors[0])
+		yDisplacements = (displacementVectors[1])
+		zDisplacements = (displacementVectors[2])
 
+		gridX = - volume[0] / 2
+		for i in range(0, volume[0]):
+			gridX += 1
+			gridY = - volume[1] / 2
+			for j in range(0, volume[1]):
+				gridY += 1
+				gridZ = - volume[2] / 2
+				for k in range(0, volume[2]): 
+					gridZ += 1
+				
+					x = gridX - a * (xDisplacements[i][j][k])
+					y = gridY - a * (yDisplacements[i][j][k])
+					z = gridZ - a * (zDisplacements[i][j][k])
 
-		gridX = - (volume[0] / gridResolution) / 2
-		for i in range(0, volume[0] / gridResolution):
-			gridX += gridResolution
-			gridY = - (volume [1] / gridResolution) / 2
-			for j in range(0, volume[1] / gridResolution):
-				gridY += gridResolution
-				gridZ = - (volume[2] / gridResolution) / 2
-				for k in range(0, volume[2] / gridResolution ): 
-					gridZ += gridResolution
-
-					x = gridX + a * (xDisplacements[i][j][k]).real
-					y = gridY + a * (yDisplacements[i][j][k]).real
-					z = gridZ + a * (zDisplacements[i][j][k]).real
-
-					xMomentum = - (a - (deltaA / 2))**2 * xDisplacements[i][j][k]
-					yMomentum = - (a - (deltaA / 2))**2 * yDisplacements[i][j][k]
-					zMomentum = - (a - (deltaA / 2))**2 * zDisplacements[i][j][k]
+					xMomentum = - (a - (deltaA / 2))**2 * (xDisplacements[i][j][k])
+					yMomentum = - (a - (deltaA / 2))**2 * (yDisplacements[i][j][k])
+					zMomentum = - (a - (deltaA / 2))**2 * (zDisplacements[i][j][k])
 
 					newParticle = Particle([x, y, z], [xMomentum, yMomentum, zMomentum], 1)
 					PositionCorrect(newParticle, volume)
 					particleList.append(newParticle)
-
-		'''
-		numBins = 100
-		xbins = [0] * 100
-		ybins = [0] * 100
-		zbins = [0] * 100
-		s = [0 * 100]
-		
-		for i in range(0, len(particleList)):
-			xbins[int(particleList[i].position[0]*5)] += 1
-			ybins[int(particleList[i].position[1]*5)] += 1
-			zbins[int(particleList[i].position[2]*5)] += 1
-
-
-		a = open('seeDisplacementDistribution.txt', 'w')
-		a.write('s \tx \ty \tz\n')
-
-		for i in range(0, numBins):
-			s = i / 5 - numBins / 5 / 2
-			a.write('%d \t%d \t%d \t%d\n' % (s, xbins[i], ybins[i], zbins[i]))
-
-		a.close()
-		'''
 
 	else:
 		for i in range(0, numParticles):
@@ -187,7 +162,7 @@ def InitialiseParticles(volume, gridResolution, numParticles, positionDistributi
 			particle.halfStepMomentum = [0, 0, 0]
 
 	elif velocityDistribution == VelocityDist.zeldovich:
-		print "Can't touch this"
+		pointless = 0
 
 	else:
 		print 'Invalid velocity distribution selected'

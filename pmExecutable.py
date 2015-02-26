@@ -12,32 +12,33 @@ from pync import Notifier
 
 start = time.time()
 print "Seeding..."
-random.seed(64339)
+random.seed(30091874)
 print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-volume                 = [10, 10, 10]
-gridResolution         = 1
+volume                 = [20, 20, 20]
+gridResolution         = 0.05
+Lbox 				   = 14000
 
 numParticles           = 0
 positionDistribution   = pm.PositionDist.zeldovich
 velocityDistribution   = pm.VelocityDist.zeldovich
 
-preComputeGreens       = False
+preComputeGreens       = True
 
 maxVelocity            = 1
 hasCenterParticle      = False
 
-startingA              = 0.0100
-maxA                   = 1.0000
-stepSize               = 0.0001
+startingA              = 0.010
+maxA                   = 1.000
+stepSize               = 0.001
 
-shootEvery             = 10
+shootEvery             = 2
 
 #----------------DEBUG PARAMETERS----------------#
 
-outputPotentialFieldXY = True
+outputPotentialFieldXY = False
 outputSystemEnergy     = False
 outputDensityField     = False
 
@@ -46,7 +47,7 @@ outputDensityField     = False
 #------------INITIALISATION FUNCTIONS------------#
 
 print "Initialising particles..."
-particleList = pm.InitialiseParticles(volume, gridResolution, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA, stepSize)
+particleList = pm.InitialiseParticles(volume, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA, stepSize, Lbox)
 if positionDistribution == pm.PositionDist.zeldovich:
 	numParticles = len(particleList)
 #particleList[4210].mass = 1000
@@ -71,7 +72,6 @@ else:
 if os.path.exists("Results/values_frame0.3D"):
 	Notifier.notify('You should probably make them not exist...', title = 'Results still exist')
 	deleteFiles = raw_input("Would you like to delete yo motherflippin results from the last test, you       simpleton? (y/n): ")
-	print '\n'
 	if deleteFiles == 'y':
 		fileList          = glob.glob("Results/*.3D")
 		potentialFileList = glob.glob("PotentialResults/*.3D")
