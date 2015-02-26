@@ -1,4 +1,8 @@
-import pmHeader as pm
+import pmClass
+import pmInitialisation as initialisation
+import pmCore as core
+import pmDebug as debug
+import pmHelpers as helpers
 
 import numpy as np
 import math
@@ -22,8 +26,8 @@ gridResolution         = 0.05
 Lbox 				   = 14000
 
 numParticles           = 0
-positionDistribution   = pm.PositionDist.sineWave1D
-velocityDistribution   = pm.VelocityDist.sineWave1D
+positionDistribution   = pmClass.PositionDist.sineWave1D
+velocityDistribution   = pmClass.VelocityDist.sineWave1D
 
 preComputeGreens       = True
 
@@ -47,24 +51,23 @@ outputDensityField     = False
 #------------INITIALISATION FUNCTIONS------------#
 
 print "Initialising particles..."
-particleList = pm.InitialiseParticles(volume, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA, stepSize, Lbox)
-if positionDistribution == pm.PositionDist.zeldovich:
+particleList = initialisation.InitialiseParticles(volume, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA, stepSize, Lbox)
+if positionDistribution == pmClass.PositionDist.zeldovich:
 	numParticles = len(particleList)
-#particleList[4210].mass = 1000
 
 if hasCenterParticle:
-	centerParticle = pm.Particle([0., 24.64, 0.], [0., -1., 0.,], 20)
+	centerParticle = pmClass.Particle([0., 24.64, 0.], [0., -1., 0.,], 20)
 	particleList.append(centerParticle)
 	numParticles += 1
 print"Done\n"
 
 print "Determining mesh shape..."
-densityField = pm.CalculateDensityField(volume, gridResolution, particleList, False)
+densityField = core.CalculateDensityField(volume, gridResolution, particleList, False)
 print "Done\n"
 
 if preComputeGreens:
 	print "Calculating Green's function..."
-	greensFunction = pm.CreateGreensFunction(densityField.shape)
+	greensFunction = core.CreateGreensFunction(densityField.shape)
 	print "Done\n"
 else:
 	greensFunction = 0
@@ -105,38 +108,38 @@ while frameNo < maxFrameNo:
 		f = open("Results/values_frame%d.3D" % (frameNo), "w")
 		f.write("x y z MomentumMagnitude\n")
 
-	densityField   = pm.CalculateDensityField(volume, gridResolution, particleList)
-	potentialField = pm.SolvePotential(densityField, a, greensFunction, preComputeGreens)
+	densityField   = core.CalculateDensityField(volume, gridResolution, particleList)
+	potentialField = core.SolvePotential(densityField, a, greensFunction, preComputeGreens)
 
 	accumulatedEnergy = 0
 
 	for i, particle in enumerate(particleList):
 
-		particle.acceleration      = pm.CalculateParticleAcceleration(particle, potentialField, gridResolution)
-		particle.halfStepMomentum += np.multiply(pm.GetF(a - stepSize) * stepSize, particle.acceleration)
+		particle.acceleration      = core.CalculateParticleAcceleration(particle, potentialField, gridResolution)
+		particle.halfStepMomentum += np.multiply(core.GetF(a - stepSize) * stepSize, particle.acceleration)
 		momentumMagnitude          = math.sqrt(particle.halfStepMomentum[0]**2 + particle.halfStepMomentum[1]**2 + particle.halfStepMomentum[2]**2)
-		particle.position         += np.multiply((a - (stepSize / 2))**(-2) * pm.GetF(a - (stepSize / 2)) * stepSize, particle.halfStepMomentum)
-		pm.PositionCorrect(particle, volume)
+		particle.position         += np.multiply((a - (stepSize / 2))**(-2) * core.GetF(a - (stepSize / 2)) * stepSize, particle.halfStepMomentum)
+		core.PositionCorrect(particle, volume)
 
 		if shoot:
 			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], momentumMagnitude))
 	
 	if shoot:
 		if outputSystemEnergy:	
-			accumulatedEnergy = pm.OutputTotalEnergy(particleList, potentialField, a, stepSize, volume)
+			accumulatedEnergy = debug.OutputTotalEnergy(particleList, potentialField, a, stepSize, volume)
 			f.write("0 %d 0 %f\n" % (volume[2]/2, accumulatedEnergy))
 			print "\t", accumulatedEnergy
 
 		if outputDensityField:
-			OutputDensityField(volume, densityField)
+			debug.OutputDensityField(volume, densityField)
 
 		if outputPotentialFieldXY:
-			pm.OutputPotentialFieldXY(potentialField, particleList, volume, frameNo, gridResolution)
+			debug.OutputPotentialFieldXY(potentialField, particleList, volume, frameNo, gridResolution)
 
 		f.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 0., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 0.))
 		f.close()
 
-	pm.OutputPercentage(frameNo, (maxA - startingA) / stepSize, time.time()-start)
+	helpers.OutputPercentage(frameNo, (maxA - startingA) / stepSize, time.time()-start)
 
 	a       += stepSize
 	frameNo += 1
