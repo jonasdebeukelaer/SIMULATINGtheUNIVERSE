@@ -22,11 +22,13 @@ class PositionDist(Enum):
 	randomShell = 2
 	evenShell   = 3
 	zeldovich   = 4
+	sineWave1D  = 5
 
 class VelocityDist(Enum):
-	random    = 1
-	zero      = 2
-	zeldovich = 3
+	random    	= 1
+	zero      	= 2
+	zeldovich 	= 3
+	sineWave1D	= 4
 
 def ComputeDisplacementVectors(shape, Lbox):
 	xDisplacementFourier = np.zeros((shape), dtype = 'complex128')
@@ -45,15 +47,12 @@ def ComputeDisplacementVectors(shape, Lbox):
 			else:
 				ky = (m - shape[1])
 
-			for n in range(0, shape[2]):
-				if n < (shape[2] / 2):
-					kz = n
-				else:
-					kz = (n - shape[2])
+			for n in range(0, (shape[2] / 2 + 1)):
+				kz = n
 
 				kSquare = float(kx**2 + ky**2 + kz**2)
 				if kSquare != 0:
-					powerValue = 10**(-4.5) * (math.sqrt(kSquare) / (Lbox * 0.05))**(0.5)
+					powerValue = 10**(-4.5) * (math.sqrt(kSquare) / (Lbox * 0.05 * 2))**(0.5)
 					ak         = powerValue * random.gauss(0., 1.) / (kSquare / Lbox**(2))
 					bk         = powerValue * random.gauss(0., 1.) / (kSquare / Lbox**(2))
 				else:
@@ -103,10 +102,34 @@ def InitialiseParticles(volume, numParticles, positionDistribution, velocityDist
 					PositionCorrect(newParticle, volume)
 					particleList.append(newParticle)
 
-					print xDisplacements[i][j][k], xMomentum
-					print yDisplacements[i][j][k], yMomentum
-					print zDisplacements[i][j][k], zMomentum, '\n'
 
+	elif positionDistribution == PositionDist.sineWave1D:
+		wavelength = volume[0]
+		kBox = 2.0 * math.pi / wavelength
+		aCross = 10.0 * a
+		waveAmplitude = 1.0 / (aCross * kBox)
+
+		qx = - volume[0] / 2
+		for i in range(0, volume[0]):
+			qx +=  (wavelength / volume[0])
+			qy = - volume[1] / 2
+			for j in range(0, volume[1]):
+				qy += 1
+				qz = - volume[2] / 2
+				for k in range(0, volume[2]):
+					qz += 1
+
+					x = qx + a * waveAmplitude * math.sin(kBox * qx)
+					y = qy
+					z = qz
+					
+					xMomentum = a**2 * waveAmplitude * math.sin(kBox * qx)
+					yMomentum = 0
+					zMomentum = 0
+
+					newParticle = Particle([x, y, z], [xMomentum, yMomentum, zMomentum], 1)
+					PositionCorrect(newParticle, volume)
+					particleList.append(newParticle)
 
 	else:
 		for i in range(0, numParticles):
@@ -169,7 +192,7 @@ def InitialiseParticles(volume, numParticles, positionDistribution, velocityDist
 		for particle in particleList:
 			particle.halfStepMomentum = [0, 0, 0]
 
-	elif velocityDistribution == VelocityDist.zeldovich:
+	elif velocityDistribution == VelocityDist.zeldovich or velocityDistribution == VelocityDist.sineWave1D:
 		print "Can't touch this"
 
 	else:
