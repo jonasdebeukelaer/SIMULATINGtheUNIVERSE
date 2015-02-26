@@ -22,8 +22,8 @@ gridResolution         = 0.05
 Lbox 				   = 14000
 
 numParticles           = 0
-positionDistribution   = pm.PositionDist.zeldovich
-velocityDistribution   = pm.VelocityDist.zeldovich
+positionDistribution   = pm.PositionDist.sineWave1D
+velocityDistribution   = pm.VelocityDist.sineWave1D
 
 preComputeGreens       = True
 
@@ -87,7 +87,7 @@ if os.path.exists("Results/values_frame0.3D"):
 
 #-----------------ITERATION LOOP-----------------#
 
-initial = open("Results/values_initialframe.3D", "w")
+initial = open("Results/values_frame0.3D", "w")
 initial.write("x y z MomentumMagnitude\n")
 for particle in particleList:
 	initial.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], 0))
@@ -96,8 +96,8 @@ initial.close()
 print "Iterating..."
 a = startingA
 iterationStart = time.time()
-frameNo = 0
-maxFrameNo = int((maxA - startingA) / stepSize)
+frameNo = 1
+maxFrameNo = int((maxA - startingA) / stepSize) + 1
 while frameNo < maxFrameNo:
 
 	shoot = True if (frameNo % shootEvery) == 0 else False
@@ -141,6 +141,11 @@ while frameNo < maxFrameNo:
 	a       += stepSize
 	frameNo += 1
 	if frameNo == maxFrameNo:
+
+		end = time.time()
+		sys.stdout.write("\n")
+		sys.stdout.write("Simulation time = %fs\n\n" % (end - iterationStart))
+
 		Notifier.notify('a = %.3f reached' % (a), title = 'User input required')
 		moreSteps = raw_input("\n\nPlease check your VisIt output... would you like to increase max A (currently at a = %.3f)? (y/n): " % (a))
 		if moreSteps == 'y':
@@ -150,8 +155,5 @@ while frameNo < maxFrameNo:
 
 #------------------------------------------------#
 
-end = time.time()
-sys.stdout.write("\n")
-sys.stdout.write("Simulation time = %fs\n\n" % (end - iterationStart))
 
 Notifier.notify('The universe has been solved', title = 'Thanks to the finest minds of the 21st century...')

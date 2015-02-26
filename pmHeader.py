@@ -22,11 +22,13 @@ class PositionDist(Enum):
 	randomShell = 2
 	evenShell   = 3
 	zeldovich   = 4
+	sineWave1D  = 5
 
 class VelocityDist(Enum):
-	random    = 1
-	zero      = 2
-	zeldovich = 3
+	random    	= 1
+	zero      	= 2
+	zeldovich 	= 3
+	sineWave1D	= 4
 
 def ComputeDisplacementVectors(shape, Lbox):
 	xDisplacementFourier = np.zeros((shape), dtype = 'complex128')
@@ -46,7 +48,7 @@ def ComputeDisplacementVectors(shape, Lbox):
 				ky = 2 * math.pi * (m - shape[1])
 
 			for n in range(0, (shape[2] / 2) + 1):
-				kz = 2 * math.pi * n
+				kz = math.pi * n
 
 				kSquare = float(kx**2 + ky**2 + kz**2)
 				if kSquare != 0:
@@ -95,6 +97,34 @@ def InitialiseParticles(volume, numParticles, positionDistribution, velocityDist
 					xMomentum = - (a - (deltaA / 2))**2 * (xDisplacements[i][j][k])
 					yMomentum = - (a - (deltaA / 2))**2 * (yDisplacements[i][j][k])
 					zMomentum = - (a - (deltaA / 2))**2 * (zDisplacements[i][j][k])
+
+					newParticle = Particle([x, y, z], [xMomentum, yMomentum, zMomentum], 1)
+					PositionCorrect(newParticle, volume)
+					particleList.append(newParticle)
+
+	elif positionDistribution == PositionDist.sineWave1D:
+		wavelength = volume[0]
+		kBox = 2.0 * math.pi / wavelength
+		aCross = 10.0 * a
+		waveAmplitude = 1.0 / (aCross * kBox)
+
+		qx = - volume[0] / 2
+		for i in range(0, volume[0]):
+			qx +=  (wavelength / volume[0])
+			qy = - volume[1] / 2
+			for j in range(0, volume[1]):
+				qy += 1
+				qz = - volume[2] / 2
+				for k in range(0, volume[2]):
+					qz += 1
+
+					x = qx + a * waveAmplitude * math.sin(kBox * qx)
+					y = qy
+					z = qz
+					
+					xMomentum = a**2 * waveAmplitude * math.sin(kBox * qx)
+					yMomentum = 0
+					zMomentum = 0
 
 					newParticle = Particle([x, y, z], [xMomentum, yMomentum, zMomentum], 1)
 					PositionCorrect(newParticle, volume)
@@ -161,7 +191,7 @@ def InitialiseParticles(volume, numParticles, positionDistribution, velocityDist
 		for particle in particleList:
 			particle.halfStepMomentum = [0, 0, 0]
 
-	elif velocityDistribution == VelocityDist.zeldovich:
+	elif velocityDistribution == VelocityDist.zeldovich or velocityDistribution == VelcoityDist.sineWave1D:
 		pointless = 0
 
 	else:
