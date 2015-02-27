@@ -111,6 +111,9 @@ def InitialiseParticles(volume, numParticles, positionDistribution, velocityDist
 		qx = - volume[0] / 2
 		for i in range(0, volume[0]):
 			qx +=  (wavelength / volume[0])
+
+			print str(a * waveAmplitude * math.sin(kBox * qx))
+
 			qy = - volume[1] / 2
 			for j in range(0, volume[1]):
 				qy += 1
@@ -118,11 +121,12 @@ def InitialiseParticles(volume, numParticles, positionDistribution, velocityDist
 				for k in range(0, volume[2]):
 					qz += 1
 
-					x = qx + a * waveAmplitude * math.sin(kBox * qx)
+					x = qx - a * waveAmplitude * math.sin(kBox * qx)
 					y = qy
 					z = qz
 					
-					xMomentum = a**2 * waveAmplitude * math.sin(kBox * qx)
+
+					xMomentum = - a * waveAmplitude * math.sin(kBox * qx)
 					yMomentum = 0
 					zMomentum = 0
 
@@ -191,7 +195,7 @@ def InitialiseParticles(volume, numParticles, positionDistribution, velocityDist
 		for particle in particleList:
 			particle.halfStepMomentum = [0, 0, 0]
 
-	elif velocityDistribution == VelocityDist.zeldovich or velocityDistribution == VelcoityDist.sineWave1D:
+	elif velocityDistribution == VelocityDist.zeldovich or velocityDistribution == VelocityDist.sineWave1D:
 		pointless = 0
 
 	else:

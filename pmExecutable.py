@@ -17,8 +17,8 @@ print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-volume                 = [20, 20, 20]
-gridResolution         = 0.05
+volume                 = [16, 16, 16]
+gridResolution         = 0.2
 Lbox 				   = 14000
 
 numParticles           = 0
@@ -30,11 +30,11 @@ preComputeGreens       = True
 maxVelocity            = 1
 hasCenterParticle      = False
 
-startingA              = 0.010
+startingA              = 0.10
 maxA                   = 1.000
 stepSize               = 0.001
 
-shootEvery             = 2
+shootEvery             = 1
 
 #----------------DEBUG PARAMETERS----------------#
 
@@ -90,7 +90,8 @@ if os.path.exists("Results/values_frame0.3D"):
 initial = open("Results/values_frame0.3D", "w")
 initial.write("x y z MomentumMagnitude\n")
 for particle in particleList:
-	initial.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], 0))
+	initial.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], particle.halfStepMomentum[0]))
+initial.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 0., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 0.))
 initial.close()
 
 print "Iterating..."
@@ -119,7 +120,7 @@ while frameNo < maxFrameNo:
 		pm.PositionCorrect(particle, volume)
 
 		if shoot:
-			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], momentumMagnitude))
+			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], particle.halfStepMomentum[0]))
 	
 	if shoot:
 		if outputSystemEnergy:	
