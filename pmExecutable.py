@@ -22,12 +22,12 @@ print "Done\n"
 #------------INITIALISATION PARAMETERS-----------#
 
 volume                 = [20, 20, 20]
-gridResolution         = 0.05
-Lbox 				   = 14000
+gridResolution         = 1
+Lbox 				   = 0.1
 
 numParticles           = 0
-positionDistribution   = pmClass.PositionDist.sineWave1D
-velocityDistribution   = pmClass.VelocityDist.sineWave1D
+positionDistribution   = pmClass.PositionDist.zeldovich
+velocityDistribution   = pmClass.VelocityDist.zeldovich
 
 preComputeGreens       = True
 
@@ -62,7 +62,7 @@ if hasCenterParticle:
 print"Done\n"
 
 print "Determining mesh shape..."
-densityField = core.CalculateDensityField(volume, gridResolution, particleList, False)
+densityField = core.CalculateDensityField(volume, gridResolution, particleList)
 print "Done\n"
 
 if preComputeGreens:
@@ -91,9 +91,10 @@ if os.path.exists("Results/values_frame0.3D"):
 #-----------------ITERATION LOOP-----------------#
 
 initial = open("Results/values_frame0.3D", "w")
-initial.write("x y z MomentumMagnitude\n")
+initial.write("x y z LocalDensity\n")
 for particle in particleList:
-	initial.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], 0))
+	localDensity = core.FindLocalDensity(particle, densityField, gridResolution)
+	initial.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], localDensity))
 initial.close()
 
 print "Iterating..."
@@ -106,7 +107,7 @@ while frameNo < maxFrameNo:
 	shoot = True if (frameNo % shootEvery) == 0 else False
 	if shoot:
 		f = open("Results/values_frame%d.3D" % (frameNo), "w")
-		f.write("x y z MomentumMagnitude\n")
+		f.write("x y z LocalDensity\n")
 
 	densityField   = core.CalculateDensityField(volume, gridResolution, particleList)
 	potentialField = core.SolvePotential(densityField, a, greensFunction, preComputeGreens)
@@ -117,12 +118,12 @@ while frameNo < maxFrameNo:
 
 		particle.acceleration      = core.CalculateParticleAcceleration(particle, potentialField, gridResolution)
 		particle.halfStepMomentum += np.multiply(core.GetF(a - stepSize) * stepSize, particle.acceleration)
-		momentumMagnitude          = math.sqrt(particle.halfStepMomentum[0]**2 + particle.halfStepMomentum[1]**2 + particle.halfStepMomentum[2]**2)
+		localDensity               = core.FindLocalDensity(particle, densityField, gridResolution)
 		particle.position         += np.multiply((a - (stepSize / 2))**(-2) * core.GetF(a - (stepSize / 2)) * stepSize, particle.halfStepMomentum)
 		core.PositionCorrect(particle, volume)
 
 		if shoot:
-			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], momentumMagnitude))
+			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], localDensity))
 	
 	if shoot:
 		if outputSystemEnergy:	

@@ -13,38 +13,38 @@ def ComputeDisplacementVectors(shape, Lbox):
 
 	for l in range(0, shape[0]):
 		if l < (shape[0] / 2):
-			kx = 2 * math.pi * l
+			kx = 2 * math.pi * l / shape[0]
 		else:
-			kx = 2 * math.pi * (l - shape[0])
+			kx = 2 * math.pi * (l - shape[0]) / shape[0]
 
 		for m in range(0, shape[1]):
 			if m < (shape[1] / 2):
-				ky = 2 * math.pi * m
+				ky = 2 * math.pi * m / shape[1]
 			else:
-				ky = 2 * math.pi * (m - shape[1])
+				ky = 2 * math.pi * (m - shape[1]) / shape[1]
 
 			for n in range(0, (shape[2] / 2) + 1):
-				kz = math.pi * n
+				kz = 2 * math.pi * n / shape[2]
 
 				kSquare = float(kx**2 + ky**2 + kz**2)
 				if kSquare != 0:
-					powerValue = 10**(-4.5) * (math.sqrt(kSquare)/ (Lbox * 0.05))**(0.5)
-					ak         = powerValue * random.gauss(0., 1.) / (math.sqrt(2) * (kSquare / Lbox**(2)))
-					bk         = powerValue * random.gauss(0., 1.) / (math.sqrt(2) * (kSquare / Lbox**(2)))
+					powerValue = 10**(-4) * (math.sqrt(kSquare) * shape[0] / Lbox * (2 * math.pi / Lbox)**3)**0.5
+					ak         = powerValue * random.gauss(0., 1.) / math.sqrt(2)
+					bk         = powerValue * random.gauss(0., 1.) / math.sqrt(2)
 				else:
 					ak = 0
 					bk = 0
 				ck = (ak - bk * 1j) / 2
 
-				xDisplacementFourier[l][m][n] = ck * kx
-				yDisplacementFourier[l][m][n] = ck * ky
-				zDisplacementFourier[l][m][n] = ck * kz
+				xDisplacementFourier[l][m][n] = ck * kx * shape[0] / Lbox
+				yDisplacementFourier[l][m][n] = ck * ky * shape[1] / Lbox
+				zDisplacementFourier[l][m][n] = ck * kz * shape[2] / Lbox
 
 	xDisplacementReal = np.fft.irfftn(xDisplacementFourier)
 	yDisplacementReal = np.fft.irfftn(yDisplacementFourier)
 	zDisplacementReal = np.fft.irfftn(zDisplacementFourier)
 
-	return (xDisplacementReal, yDisplacementReal, zDisplacementReal)
+	return (xDisplacementReal * shape[0] / Lbox, yDisplacementReal * shape[0] / Lbox, zDisplacementReal * shape[0] / Lbox)
 
 def InitialiseParticles(volume, numParticles, positionDistribution, velocityDistribution, maxVelocity, a, deltaA, Lbox):
 	particleList = []
@@ -74,7 +74,9 @@ def InitialiseParticles(volume, numParticles, positionDistribution, velocityDist
 					yMomentum = - (a - (deltaA / 2))**2 * (yDisplacements[i][j][k])
 					zMomentum = - (a - (deltaA / 2))**2 * (zDisplacements[i][j][k])
 
-					newParticle = Particle([x, y, z], [xMomentum, yMomentum, zMomentum], 1)
+					print xDisplacements[i][j][k], yDisplacements[i][j][k], zDisplacements[i][j][k]
+
+					newParticle = pmClass.Particle([x, y, z], [xMomentum, yMomentum, zMomentum], 1)
 					core.PositionCorrect(newParticle, volume)
 					particleList.append(newParticle)
 

@@ -11,22 +11,21 @@ def FindMeshIndex(position, gridResolution, gridSize):
 		index = gridSize - 1
 	return index
 
-def CalculateDensityField(volume, gridResolution, particleList, populateArray = True):
+def CalculateDensityField(volume, gridResolution, particleList):
 	meshShape = [volume[0] / gridResolution, volume[1] / gridResolution, volume[2] / gridResolution]
 	if meshShape[0] != int(meshShape[0]) or meshShape[1] != int(meshShape[1]) or meshShape[2] != int(meshShape[2]):
 		sys.exit("Error: non-integer cell number defined pleuz fix")
 
 	densityFieldMesh = np.zeros((meshShape))
 
-	if populateArray:
-		for particle in particleList:
-			xMesh = FindMeshIndex(particle.position[0], gridResolution, meshShape[0])
-			yMesh = FindMeshIndex(particle.position[1], gridResolution, meshShape[1])
-			zMesh = FindMeshIndex(particle.position[2], gridResolution, meshShape[2])
+	for particle in particleList:
+		xMesh = FindMeshIndex(particle.position[0], gridResolution, meshShape[0])
+		yMesh = FindMeshIndex(particle.position[1], gridResolution, meshShape[1])
+		zMesh = FindMeshIndex(particle.position[2], gridResolution, meshShape[2])
 
-			densityFieldMesh[xMesh][yMesh][zMesh] += particle.mass
+		densityFieldMesh[xMesh][yMesh][zMesh] += particle.mass
 
-		densityFieldMesh /= (gridResolution**3)
+	densityFieldMesh /= (gridResolution**3)
 
 	return densityFieldMesh
 
@@ -133,6 +132,19 @@ def PositionCorrect(particle, volumeLimits):
 	positionLimits = np.array(volumeLimits) / 2
 	for index, position in enumerate(particle.position):
 		if position > positionLimits[index]:
-			particle.position[index] = position - volumeLimits[index]
+			while position > positionLimits[index]:
+				position = position - volumeLimits[index]
+			particle.position[index] = position
 		elif position < (- positionLimits[index]):
-			particle.position[index] = position + volumeLimits[index]
+			while position < (- positionLimits[index]):
+				position = position + volumeLimits[index]
+			particle.position[index] = position
+
+def FindLocalDensity(particle, densityField, gridResolution):
+	meshShape = densityField.shape
+
+	xMesh = FindMeshIndex(particle.position[0], gridResolution, meshShape[0])
+	yMesh = FindMeshIndex(particle.position[1], gridResolution, meshShape[1])
+	zMesh = FindMeshIndex(particle.position[2], gridResolution, meshShape[2])
+
+	return densityField[xMesh][yMesh][zMesh]
