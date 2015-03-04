@@ -12,6 +12,17 @@ Smoosh.bmp
 gaussianSmoothedResults/
 fourierResults/
 greensFunction.3D
+pmHeader.py
 pmHeader.pyc
 Potentialresults/
 seeDisplacementDistribution.txt
+greensTest.py
+lena.bmp
+pmClass.pyc
+pmCore.pyc
+pmDebug.pyc
+pmHelpers.pyc
+pmInitialisation.pyc
+pmHelper.py
+test.py
+grafic/
