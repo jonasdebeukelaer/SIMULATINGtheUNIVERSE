@@ -23,7 +23,7 @@ print "Done\n"
 
 volume                 = [20, 20, 20]
 gridResolution         = 1
-Lbox 				   = 0.1
+Lbox 				   = 1
 
 numParticles           = 0
 positionDistribution   = pmClass.PositionDist.zeldovich
@@ -137,7 +137,7 @@ while frameNo < maxFrameNo:
 		if outputPotentialFieldXY:
 			debug.OutputPotentialFieldXY(potentialField, particleList, volume, frameNo, gridResolution)
 
-		f.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 0., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 0.))
+		f.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 1., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 1.))
 		f.close()
 
 	helpers.OutputPercentage(frameNo, (maxA - startingA) / stepSize, time.time()-start)
