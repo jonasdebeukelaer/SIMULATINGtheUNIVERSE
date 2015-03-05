@@ -26,19 +26,19 @@ gridResolution         = 1
 Lbox 				   = 1
 
 numParticles           = 0
-positionDistribution   = pmClass.PositionDist.zeldovich
-velocityDistribution   = pmClass.VelocityDist.zeldovich
+positionDistribution   = pmClass.PositionDist.sineWave1D
+velocityDistribution   = pmClass.VelocityDist.sineWave1D
 
 preComputeGreens       = True
 
 maxVelocity            = 1
 hasCenterParticle      = False
 
-startingA              = 0.010
+startingA              = 0.10
 maxA                   = 1.000
 stepSize               = 0.001
 
-shootEvery             = 2
+shootEvery             = 1
 
 #----------------DEBUG PARAMETERS----------------#
 
@@ -93,8 +93,8 @@ if os.path.exists("Results/values_frame0.3D"):
 initial = open("Results/values_frame0.3D", "w")
 initial.write("x y z LocalDensity\n")
 for particle in particleList:
-	localDensity = core.FindLocalDensity(particle, densityField, gridResolution)
-	initial.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], localDensity))
+	initial.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], particle.halfStepMomentum[0]))
+initial.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 0., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 0.))
 initial.close()
 
 print "Iterating..."
@@ -123,7 +123,8 @@ while frameNo < maxFrameNo:
 		core.PositionCorrect(particle, volume)
 
 		if shoot:
-			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], localDensity))
+			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], particle.halfStepMomentum[0]))
+			#f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], localDensity))
 	
 	if shoot:
 		if outputSystemEnergy:	
