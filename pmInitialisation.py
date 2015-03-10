@@ -27,7 +27,7 @@ def ComputeDisplacementVectors(shape, Lbox, a):
 			for n in range(0, (shape[2] / 2) + 1):
 				kz = 2 * math.pi * n / shape[2]
 
-				kSquare = float(kx**2 + ky**2 + kz**2) * (2 * math.pi / Lbox)**2
+				kSquare = float(kx**2 + ky**2 + kz**2) #* (2 * math.pi / Lbox)**2
 				k       = math.sqrt(kSquare)
 				if kSquare != 0:
 					powerValue = 10**(-4)
@@ -38,7 +38,7 @@ def ComputeDisplacementVectors(shape, Lbox, a):
 					bk = 0
 				ck = (ak - bk * 1j) / 2
 
-				xDisplacementFourier[l][m][n] = ck * kx 
+				xDisplacementFourier[l][m][n] = ck * kx
 				yDisplacementFourier[l][m][n] = ck * ky
 				zDisplacementFourier[l][m][n] = ck * kz
 
@@ -116,8 +116,6 @@ def InitialiseParticles(volume, numParticles, positionDistribution, velocityDist
 					xMomentum = - (a - (deltaA / 2))**2 * (xDisplacements[i][j][k])
 					yMomentum = - (a - (deltaA / 2))**2 * (yDisplacements[i][j][k])
 					zMomentum = - (a - (deltaA / 2))**2 * (zDisplacements[i][j][k])
-
-					#print xDisplacements[i][j][k]
 
 					newParticle = pmClass.Particle([x, y, z], [xMomentum, yMomentum, zMomentum], 1)
 					core.PositionCorrect(newParticle, volume)

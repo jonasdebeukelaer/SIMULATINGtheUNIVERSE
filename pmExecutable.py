@@ -21,7 +21,7 @@ print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-volume                 = [20, 20, 20]
+volume                 = [10, 10, 10]
 gridResolution         = 1
 Lbox 				   = 100
 
@@ -139,7 +139,7 @@ while frameNo < maxFrameNo:
 						f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], math.log(localDensity)))
 				else:
 					f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], localDensity))
-	
+
 	if shoot:
 		if outputSystemEnergy:	
 			accumulatedEnergy = debug.OutputTotalEnergy(particleList, potentialField, a, stepSize, volume)
