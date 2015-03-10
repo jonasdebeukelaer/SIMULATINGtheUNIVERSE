@@ -1,0 +1,3 @@
+import visit
+
+visit.Launch()

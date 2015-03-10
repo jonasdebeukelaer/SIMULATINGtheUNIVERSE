@@ -23,11 +23,11 @@ print "Done\n"
 
 volume                 = [20, 20, 20]
 gridResolution         = 1
-Lbox 				   = 1
+Lbox 				   = 100
 
 numParticles           = 0
-positionDistribution   = pmClass.PositionDist.sineWave1D
-velocityDistribution   = pmClass.VelocityDist.sineWave1D
+positionDistribution   = pmClass.PositionDist.zeldovich
+velocityDistribution   = pmClass.VelocityDist.zeldovich
 
 preComputeGreens       = True
 
@@ -38,7 +38,8 @@ startingA              = 0.10
 maxA                   = 1.000
 stepSize               = 0.001
 
-shootEvery             = 1
+shootEvery             = 2
+outputAsSphereOnly       = True
 
 #----------------DEBUG PARAMETERS----------------#
 
@@ -54,6 +55,11 @@ print "Initialising particles..."
 particleList = initialisation.InitialiseParticles(volume, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA, stepSize, Lbox)
 if positionDistribution == pmClass.PositionDist.zeldovich:
 	numParticles = len(particleList)
+#particleList = []
+#particleList.append(pmClass.Particle([volume[0]/32, 0, 0], [0, 0, 0], 1))
+#particleList.append(pmClass.Particle([-volume[0]/32, 0, 0], [0, 0, 0], 1))
+#numParticles = 2
+
 
 if hasCenterParticle:
 	centerParticle = pmClass.Particle([0., 24.64, 0.], [0., -1., 0.,], 20)
@@ -93,8 +99,9 @@ if os.path.exists("Results/values_frame0.3D"):
 initial = open("Results/values_frame0.3D", "w")
 initial.write("x y z LocalDensity\n")
 for particle in particleList:
-	initial.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], particle.halfStepMomentum[0]))
-initial.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 0., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 0.))
+	localDensity = core.FindLocalDensity(particle, densityField, gridResolution)
+	initial.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], math.log(localDensity)))
+initial.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 1., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 1.))
 initial.close()
 
 print "Iterating..."
@@ -123,8 +130,15 @@ while frameNo < maxFrameNo:
 		core.PositionCorrect(particle, volume)
 
 		if shoot:
-			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], particle.halfStepMomentum[0]))
-			#f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], localDensity))
+			if positionDistribution == pmClass.PositionDist.sineWave1D:
+				f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], particle.halfStepMomentum[0]))
+			else:
+				if outputAsSphereOnly:
+					r = math.sqrt(particle.position[0]**2 + particle.position[1]**2 + particle.position[2]**2)
+					if r <= volume[0]/2:
+						f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], math.log(localDensity)))
+				else:
+					f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], localDensity))
 	
 	if shoot:
 		if outputSystemEnergy:	
@@ -141,6 +155,7 @@ while frameNo < maxFrameNo:
 		f.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 1., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 1.))
 		f.close()
 
+	#core.ClusterAnalysis(volume, densityField)
 	helpers.OutputPercentage(frameNo, (maxA - startingA) / stepSize, time.time()-start)
 
 	a       += stepSize
@@ -159,6 +174,11 @@ while frameNo < maxFrameNo:
 			sys.stdout.write("\n")
 
 #------------------------------------------------#
+print "doing clustering analysis"
+
+
+
+
 
 
 Notifier.notify('The universe has been solved', title = 'Thanks to the finest minds of the 21st century...')

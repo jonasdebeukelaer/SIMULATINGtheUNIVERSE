@@ -5,6 +5,9 @@ import math
 import sys
 import pyfftw
 
+
+from sklearn.cluster import MeanShift
+
 def FindMeshIndex(position, gridResolution, gridSize):
 	index = round((position / gridResolution) + (gridResolution / 2)) + ((gridSize / 2) - 1)
 	if index == -1:
@@ -148,3 +151,11 @@ def FindLocalDensity(particle, densityField, gridResolution):
 	zMesh = FindMeshIndex(particle.position[2], gridResolution, meshShape[2])
 
 	return densityField[xMesh][yMesh][zMesh]
+
+
+
+
+#def ClusterAnalysis(volume, densityField):
+#	ms = MeanShift()
+#	a = ms.predict(densityField[:][:][volume[2]/2+1])
+#	print a

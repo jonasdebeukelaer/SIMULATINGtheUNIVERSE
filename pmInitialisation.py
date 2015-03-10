@@ -30,7 +30,7 @@ def ComputeDisplacementVectors(shape, Lbox, a):
 				kSquare = float(kx**2 + ky**2 + kz**2) * (2 * math.pi / Lbox)**2
 				k       = math.sqrt(kSquare)
 				if kSquare != 0:
-					powerValue = (2 * math.pi**2 / k**3) * (k / 70)**4 * (10**(-5))**2 * a**2
+					powerValue = 10**(-4)
 					ak         = math.sqrt(powerValue) * random.gauss(0., 1.) / kSquare
 					bk         = math.sqrt(powerValue) * random.gauss(0., 1.) / kSquare
 				else:
@@ -42,9 +42,9 @@ def ComputeDisplacementVectors(shape, Lbox, a):
 				yDisplacementFourier[l][m][n] = ck * ky
 				zDisplacementFourier[l][m][n] = ck * kz
 
-	xDisplacementReal = np.fft.irfftn(xDisplacementFourier)
-	yDisplacementReal = np.fft.irfftn(yDisplacementFourier)
-	zDisplacementReal = np.fft.irfftn(zDisplacementFourier)
+	xDisplacementReal = np.fft.irfftn(xDisplacementFourier) * shape[0]**3
+	yDisplacementReal = np.fft.irfftn(yDisplacementFourier) * shape[1]**3
+	zDisplacementReal = np.fft.irfftn(zDisplacementFourier) * shape[2]**3
 
 	return (xDisplacementReal, yDisplacementReal, zDisplacementReal)
 
@@ -56,16 +56,19 @@ def ComputeDisplacementAlternative(shape, Lbox, a):
 	dk = 2 * math.pi / Lbox
 
 	for nx in range(0, shape[0]):
+		kx = 2 * math.pi * nx / shape[0]
 		for ny in range(0, shape[1]):
+			ky = 2 * math.pi * ny / shape[1]
 			for nz in range(0, (shape[2] / 2) + 1):
+				kz = 2 * math.pi * nz / shape[2]
 
 				k          = math.sqrt((nx**2 + ny**2 + nz**2) * dk**2)
-				powerValue = (2 * math.pi**2) * k * (1. / 70.)**4 * (10**8)**2 * a**2
+				powerValue = (2 * math.pi**2) * k * (1. / 70.)**4 * (10**7)**2 * a**2
 
 				Ax = float(math.sqrt(-math.log(1. - random.random()) * powerValue))
 				Ay = float(math.sqrt(-math.log(1. - random.random()) * powerValue))
 				Az = float(math.sqrt(-math.log(1. - random.random()) * powerValue))
-				
+
 				thetaX = float(random.uniform(0. , 2 * math.pi))
 				thetaY = float(random.uniform(0. , 2 * math.pi))
 				thetaZ = float(random.uniform(0. , 2 * math.pi))
@@ -89,7 +92,7 @@ def InitialiseParticles(volume, numParticles, positionDistribution, velocityDist
 
 	if positionDistribution == pmClass.PositionDist.zeldovich:
 
-		displacementVectors = ComputeDisplacementAlternative(volume, Lbox, a)
+		displacementVectors = ComputeDisplacementVectors(volume, Lbox, a)
 		xDisplacements = (displacementVectors[0])
 		yDisplacements = (displacementVectors[1])
 		zDisplacements = (displacementVectors[2])
@@ -107,6 +110,8 @@ def InitialiseParticles(volume, numParticles, positionDistribution, velocityDist
 					x = gridX - a * (xDisplacements[i][j][k])
 					y = gridY - a * (yDisplacements[i][j][k])
 					z = gridZ - a * (zDisplacements[i][j][k])
+
+					print xDisplacements[i][j][k], yDisplacements[i][j][k], zDisplacements[i][j][k]
 
 					xMomentum = - (a - (deltaA / 2))**2 * (xDisplacements[i][j][k])
 					yMomentum = - (a - (deltaA / 2))**2 * (yDisplacements[i][j][k])
