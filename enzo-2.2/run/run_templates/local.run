@@ -1,3 +1,0 @@
-#! /bin/bash
-
-mpirun -n ${N_PROCS} ${EXECUTABLE} -d ${PAR_FILE} >& estd.out;
