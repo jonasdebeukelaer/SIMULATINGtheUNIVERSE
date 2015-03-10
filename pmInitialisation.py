@@ -27,10 +27,10 @@ def ComputeDisplacementVectors(shape, Lbox, a):
 			for n in range(0, (shape[2] / 2) + 1):
 				kz = 2 * math.pi * n / shape[2]
 
-				kSquare = float(kx**2 + ky**2 + kz**2) * (2 * math.pi / Lbox)**2
+				kSquare = float(kx**2 + ky**2 + kz**2) #* (2 * math.pi / Lbox)**2
 				k       = math.sqrt(kSquare)
-				if kSquare != 0:
-					powerValue = (2 * math.pi**2 / k**3) * (k / 70)**4 * (10**(-5))**2 * a**2
+				if kSquare != 0.:
+					powerValue = 1 #(2 * math.pi**2 / k**3) * (k / 70)**4 * (10**(-5))**2 * a**2
 					ak         = math.sqrt(powerValue) * random.gauss(0., 1.) / kSquare
 					bk         = math.sqrt(powerValue) * random.gauss(0., 1.) / kSquare
 				else:
@@ -38,13 +38,13 @@ def ComputeDisplacementVectors(shape, Lbox, a):
 					bk = 0
 				ck = (ak - bk * 1j) / 2
 
-				xDisplacementFourier[l][m][n] = ck * kx 
+				xDisplacementFourier[l][m][n] = ck * kx
 				yDisplacementFourier[l][m][n] = ck * ky
 				zDisplacementFourier[l][m][n] = ck * kz
 
-	xDisplacementReal = np.fft.irfftn(xDisplacementFourier)
-	yDisplacementReal = np.fft.irfftn(yDisplacementFourier)
-	zDisplacementReal = np.fft.irfftn(zDisplacementFourier)
+	xDisplacementReal = np.fft.irfftn(xDisplacementFourier) * shape[0]**3
+	yDisplacementReal = np.fft.irfftn(yDisplacementFourier) * shape[1]**3
+	zDisplacementReal = np.fft.irfftn(zDisplacementFourier) * shape[2]**3
 
 	return (xDisplacementReal, yDisplacementReal, zDisplacementReal)
 
@@ -89,7 +89,7 @@ def InitialiseParticles(volume, numParticles, positionDistribution, velocityDist
 
 	if positionDistribution == pmClass.PositionDist.zeldovich:
 
-		displacementVectors = ComputeDisplacementAlternative(volume, Lbox, a)
+		displacementVectors = ComputeDisplacementVectors(volume, Lbox, a)
 		xDisplacements = (displacementVectors[0])
 		yDisplacements = (displacementVectors[1])
 		zDisplacements = (displacementVectors[2])
@@ -111,8 +111,6 @@ def InitialiseParticles(volume, numParticles, positionDistribution, velocityDist
 					xMomentum = - (a - (deltaA / 2))**2 * (xDisplacements[i][j][k])
 					yMomentum = - (a - (deltaA / 2))**2 * (yDisplacements[i][j][k])
 					zMomentum = - (a - (deltaA / 2))**2 * (zDisplacements[i][j][k])
-
-					#print xDisplacements[i][j][k]
 
 					newParticle = pmClass.Particle([x, y, z], [xMomentum, yMomentum, zMomentum], 1)
 					core.PositionCorrect(newParticle, volume)
