@@ -15,7 +15,7 @@ def GetNumberOfThreads():
 	return threads
 
 def OutputPercentage(timeStep, numTimeSteps, timeElapsed):
-	i = (float(timeStep + 1) / numTimeSteps) * 100
+	i = (float(timeStep) / numTimeSteps) * 100
 	timeLeft = timeElapsed * ((100. / i) - 1)
 	hours = math.floor(timeLeft / 3600.)
 	minutes = math.floor((timeLeft % 3600) / 60.)
