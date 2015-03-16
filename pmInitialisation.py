@@ -8,9 +8,10 @@ import random
 
 
 def ComputeDisplacementVectors(shape, Lbox, a):
-	xDisplacementFourier = np.zeros((shape), dtype = 'complex128')
-	yDisplacementFourier = np.zeros((shape), dtype = 'complex128')
-	zDisplacementFourier = np.zeros((shape), dtype = 'complex128')
+	fourierShape = [shape[0], shape[1], shape[2]/2 + 1]
+	xDisplacementFourier = np.zeros((fourierShape), dtype = 'complex128')
+	yDisplacementFourier = np.zeros((fourierShape), dtype = 'complex128')
+	zDisplacementFourier = np.zeros((fourierShape), dtype = 'complex128')
 
 	for l in range(0, shape[0]):
 		if l < (shape[0] / 2):
@@ -30,9 +31,9 @@ def ComputeDisplacementVectors(shape, Lbox, a):
 				kSquare = float(kx**2 + ky**2 + kz**2) #* (2 * math.pi / Lbox)**2
 				k       = math.sqrt(kSquare)
 				if kSquare != 0:
-					powerValue = 1
-					ak         = math.sqrt(powerValue) * random.gauss(0., 1.) / kSquare
-					bk         = math.sqrt(powerValue) * random.gauss(0., 1.) / kSquare
+					powerValue = 10**(-4.5) * ((k * shape[0]) / (Lbox * 0.05))
+					ak         = math.sqrt(powerValue) * random.gauss(0., 1.) / (k * shape[0] / Lbox)**2
+					bk         = math.sqrt(powerValue) * random.gauss(0., 1.) / (k * shape[0] / Lbox)**2
 				else:
 					ak = 0
 					bk = 0

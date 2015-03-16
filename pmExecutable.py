@@ -16,20 +16,20 @@ from pync import Notifier
 
 start = time.time()
 print "Seeding..."
-random.seed(30091875)		#30091874)
+random.seed(30091874) #30091875)		#
 print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-volume                 = [24, 24, 24]
+volume                 = [10, 10, 10]
 gridResolution         = 1
-Lbox 				   = 100
+Lbox 				   = 10
 
 numParticles           = 0
 positionDistribution   = pmClass.PositionDist.zeldovich
 velocityDistribution   = pmClass.VelocityDist.zeldovich
 
-preComputeGreens       = False
+preComputeGreens       = True
 
 maxVelocity            = 1
 hasCenterParticle      = False
@@ -39,7 +39,7 @@ maxA                   = 1.000
 stepSize               = 0.001
 
 shootEvery             = 2
-outputAsSphereOnly     = True
+outputAsSphereOnly     = False
 
 #----------------DEBUG PARAMETERS----------------#
 
@@ -166,7 +166,7 @@ while frameNo < maxFrameNo:
 		f.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 1., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 1.))
 		f.close()
 
-	#core.ClusterAnalysis(volume, densityField)
+	#core.OutputPowerSpectrum(densityField)
 	helpers.OutputPercentage(frameNo, (maxA - startingA) / stepSize, time.time()-start)
 
 	a       += stepSize
