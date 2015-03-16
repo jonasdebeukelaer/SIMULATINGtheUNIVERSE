@@ -43,7 +43,7 @@ outputAsSphere         = False
 
 outputPotentialFieldXY = False
 outputSystemEnergy     = False
-outputDensityField     = True
+outputDensityField     = False
 
 #------------------------------------------------#
 
