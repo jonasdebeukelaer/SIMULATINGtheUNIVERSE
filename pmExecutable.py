@@ -153,5 +153,5 @@ while frameNo < maxFrameNo:
 	frameNo += 1
 
 #------------------------------------------------#
-
+print ''
 Notifier.notify('The universe has been solved', title = 'Thanks to the finest minds of the 21st century...')
