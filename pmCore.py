@@ -7,32 +7,26 @@ import pyfftw
 
 from operator import itemgetter
 
-def FindMeshIndex(position, gridResolution, gridSize):
-	index = math.floor((position / gridResolution) + (gridResolution / 2)) + ((gridSize / 2) - 1)
+def FindMeshIndex(position, nGrid):
+	index = math.floor(position + 0.5) + ((nGrid / 2) - 1)
 	if index == -1:
-		index = gridSize - 1
+		index = nGrid - 1
 	return index
 
-def CalculateDensityField(volume, gridResolution, particleList):
-	meshShape = [volume[0] / gridResolution, volume[1] / gridResolution, volume[2] / gridResolution]
-	if meshShape[0] != int(meshShape[0]) or meshShape[1] != int(meshShape[1]) or meshShape[2] != int(meshShape[2]):
-		sys.exit("Error: non-integer cell number defined pleuz fix")
-
-	densityFieldMesh = np.zeros((meshShape))
+def CalculateDensityField(nGrid, particleList):
+	densityFieldMesh = np.zeros([nGrid, nGrid, nGrid])
 
 	for particle in particleList:
-		xMesh = FindMeshIndex(particle.position[0], gridResolution, meshShape[0])
-		yMesh = FindMeshIndex(particle.position[1], gridResolution, meshShape[1])
-		zMesh = FindMeshIndex(particle.position[2], gridResolution, meshShape[2])
+		xMesh = FindMeshIndex(particle.position[0], nGrid)
+		yMesh = FindMeshIndex(particle.position[1], nGrid)
+		zMesh = FindMeshIndex(particle.position[2], nGrid)
 
 		densityFieldMesh[xMesh][yMesh][zMesh] += particle.mass
 
-	densityFieldMesh /= (gridResolution**3)
-
 	return densityFieldMesh
 
-def CreateGreensFunction(unalteredShape):
-	shape       = (unalteredShape[0], unalteredShape[1], unalteredShape[2] / 2 + 1)	
+def CreateGreensFunction(nGrid):
+	shape       = (nGrid, nGrid, nGrid / 2 + 1)	
 	greensArray = np.zeros((shape))
 
 	constant = 1
@@ -98,11 +92,11 @@ def SolvePotential(densityField, a, greensFunction, preComputeGreens):
 
 	return potentialField
 
-def FindPlusMinus(meshIndex, axisSize):
+def FindPlusMinus(meshIndex, nGrid):
 	if meshIndex == 0:
 		meshPlus  = meshIndex + 1
-		meshMinus = axisSize - 1
-	elif meshIndex == axisSize - 1:
+		meshMinus = nGrid - 1
+	elif meshIndex == nGrid - 1:
 		meshPlus  = 0
 		meshMinus = meshIndex - 1
 	else:
@@ -111,12 +105,12 @@ def FindPlusMinus(meshIndex, axisSize):
 
 	return (meshPlus, meshMinus)
 
-def CalculateParticleAcceleration(particle, potentialField, gridResolution):
+def CalculateParticleAcceleration(particle, potentialField):
 	meshShape = potentialField.shape
 
-	xMesh = FindMeshIndex(particle.position[0], gridResolution, meshShape[0])
-	yMesh = FindMeshIndex(particle.position[1], gridResolution, meshShape[1])
-	zMesh = FindMeshIndex(particle.position[2], gridResolution, meshShape[2])
+	xMesh = FindMeshIndex(particle.position[0], meshShape[0])
+	yMesh = FindMeshIndex(particle.position[1], meshShape[1])
+	zMesh = FindMeshIndex(particle.position[2], meshShape[2])
 
 	xNeighbours = FindPlusMinus(xMesh, meshShape[0])
 	yNeighbours = FindPlusMinus(yMesh, meshShape[1])
@@ -131,24 +125,24 @@ def CalculateParticleAcceleration(particle, potentialField, gridResolution):
 def GetF(a, omega_m = 1, omega_k = 0, omega_lambda = 0):
 	return (a**(-1)*(omega_m + omega_k * a + omega_lambda * a**3))**(-0.5)
 
-def PositionCorrect(particle, volumeLimits):
-	positionLimits = np.array(volumeLimits) / 2
+def PositionCorrect(particle, nGrid):
+	positionLimit = nGrid / 2
 	for index, position in enumerate(particle.position):
-		if position > positionLimits[index]:
-			while position > positionLimits[index]:
-				position = position - volumeLimits[index]
+		if position > positionLimit:
+			while position > positionLimit:
+				position = position - nGrid
 			particle.position[index] = position
-		elif position < (- positionLimits[index]):
-			while position < (- positionLimits[index]):
-				position = position + volumeLimits[index]
+		elif position < (- positionLimit):
+			while position < (- positionLimit):
+				position = position + nGrid
 			particle.position[index] = position
 
-def FindLocalDensity(particle, densityField, gridResolution):
+def FindLocalDensity(particle, densityField):
 	meshShape = densityField.shape
 
-	xMesh = FindMeshIndex(particle.position[0], gridResolution, meshShape[0])
-	yMesh = FindMeshIndex(particle.position[1], gridResolution, meshShape[1])
-	zMesh = FindMeshIndex(particle.position[2], gridResolution, meshShape[2])
+	xMesh = FindMeshIndex(particle.position[0], meshShape[0])
+	yMesh = FindMeshIndex(particle.position[1], meshShape[1])
+	zMesh = FindMeshIndex(particle.position[2], meshShape[2])
 
 	return densityField[xMesh][yMesh][zMesh]
 
@@ -190,4 +184,3 @@ def OutputPowerSpectrum(densityField):
 			topK += 1
 
 	print binnedPowerSpectrum
-

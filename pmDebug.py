@@ -3,44 +3,44 @@ import pmCore as core
 import numpy as np
 import math
 
-def OutputPotentialFieldXY(potentialField, particleList, volume, timeStep, gridResolution):
+def OutputPotentialFieldXY(potentialField, particleList, nGrid, timeStep):
 	g = open("PotentialResults/potential_frame%d.3D" % (timeStep), "w")
 	g.write("x y z Potential\n")
 	
-	for i in range(0, int(volume[0]/gridResolution)):
-		for j in range(0, int(volume[1]/gridResolution)):
-			for k in range(0, int(volume[2]/gridResolution)):
+	for i in range(0, nGrid):
+		for j in range(0, nGrid):
+			for k in range(0, nGrid):
 				potentialValue = potentialField[i][j][k]
 				if i % 2 == 0 and j % 2 == 0 and k % 2 ==0:
-					g.write("%f %f %f %f\n" % (i*gridResolution-((volume[0]/2)), j*gridResolution-((volume[1]/2)), k*gridResolution-((volume[2]/2)-1), potentialValue))
+					g.write("%f %f %f %f\n" % (i - (nGrid / 2), j - (nGrid / 2), k - (nGrid / 2), potentialValue))
 
 	sliceOutput = open("PotentialResults/potential_slice%d.3D" % timeStep, "w")
 	sliceOutput.write("x y z Potential\n")
 
-	for i in range(0, int(volume[0]/gridResolution)):
-		for j in range(0, int(volume[1]/gridResolution)):
+	for i in range(0, nGrid):
+		for j in range(0, nGrid):
 			potentialValue = potentialField[i][j][0]
 			if i % 4 == 0 and j % 4 == 0:	
-				sliceOutput.write("%f %f 0 %f\n" % (i*gridResolution-((volume[0]/2)), j*gridResolution-((volume[1]/2)), potentialValue))
+				sliceOutput.write("%f %f 0 %f\n" % (i - (nGrid / 2), j - (nGrid / 2), potentialValue))
 
 
 	for particle in particleList:
 		sliceOutput.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], -0.1))
 
-	g.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 0., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 0.))
+	g.write("%f %f %f %f\n%f %f %f %f\n" % (nGrid / 2, nGrid / 2, nGrid / 2, 0., - nGrid / 2, - nGrid / 2, - nGrid / 2, 0.))
 	g.close()
 
-	sliceOutput.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 0., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 0.))
+	sliceOutput.write("%f %f %f %f\n%f %f %f %f\n" % (nGrid / 2, nGrid / 2, nGrid / 2, 0., - nGrid / 2, - nGrid / 2, - nGrid / 2, 0.))
 	sliceOutput.close()
 
 
-def OutputTotalEnergy(particleList, potentialField, a, stepSize, volume):
+def OutputTotalEnergy(particleList, potentialField, a, stepSize, nGrid):
 	
 	potential = 0
 	for particle in particleList:
-		xIndex = core.FindMeshIndex(particle.position[0], 1, volume[0])
-		yIndex = core.FindMeshIndex(particle.position[1], 1, volume[1])
-		zIndex = core.FindMeshIndex(particle.position[2], 1, volume[2])
+		xIndex = core.FindMeshIndex(particle.position[0], nGrid)
+		yIndex = core.FindMeshIndex(particle.position[1], nGrid)
+		zIndex = core.FindMeshIndex(particle.position[2], nGrid)
 
 		potential += potentialField[xIndex][yIndex][zIndex] * particle.mass
 
@@ -51,17 +51,15 @@ def OutputTotalEnergy(particleList, potentialField, a, stepSize, volume):
 
 	return [potentialE + kinetic, potentialE, kinetic]
 
-def OutputDensityField(volume, densityField):
+def OutputDensityField(nGrid, densityField, frameNo):
 	densityFile = open("Densityresults/density_frame%d.3D" % (frameNo), "w")
 	densityFile.write("x y z Density\n")
 
-	for i in range(0, volume[0]):
-		for j in range(0, volume[1]):
-			for k in range(0, volume[2]):
+	for i in range(0, nGrid):
+		for j in range(0, nGrid):
+			for k in range(0, nGrid):
 				cellDensity = densityField[i][j][k]
 				if cellDensity != 0:
-					cellDensity -= 990 if cellDensity >= 1000 else cellDensity 
-					if cellDensity != 0:
-						densityFile.write("%f %f %f %f\n" % (i-(volume[0]/2-1), j-(volume[1]/2-1), k-(volume[2]/2-1), math.log(abs(cellDensity))))
+					densityFile.write("%f %f %f %f\n" % (i-(nGrid/2-1), j-(nGrid/2-1), k-(nGrid/2-1), abs(cellDensity)))
 
 	densityFile.close()
