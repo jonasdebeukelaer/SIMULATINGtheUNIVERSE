@@ -16,12 +16,12 @@ from pync import Notifier
 
 start = time.time()
 print "Seeding..."
-random.seed(30091874)
+random.seed(30091875)		#30091874)
 print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-volume                 = [10, 10, 10]
+volume                 = [24, 24, 24]
 gridResolution         = 1
 Lbox 				   = 100
 
@@ -29,7 +29,7 @@ numParticles           = 0
 positionDistribution   = pmClass.PositionDist.zeldovich
 velocityDistribution   = pmClass.VelocityDist.zeldovich
 
-preComputeGreens       = True
+preComputeGreens       = False
 
 maxVelocity            = 1
 hasCenterParticle      = False
@@ -39,7 +39,7 @@ maxA                   = 1.000
 stepSize               = 0.001
 
 shootEvery             = 2
-outputAsSphereOnly       = True
+outputAsSphereOnly     = True
 
 #----------------DEBUG PARAMETERS----------------#
 
@@ -56,8 +56,8 @@ particleList = initialisation.InitialiseParticles(volume, numParticles, position
 if positionDistribution == pmClass.PositionDist.zeldovich:
 	numParticles = len(particleList)
 #particleList = []
-#particleList.append(pmClass.Particle([volume[0]/32, 0, 0], [0, 0, 0], 1))
-#particleList.append(pmClass.Particle([-volume[0]/32, 0, 0], [0, 0, 0], 1))
+#particleList.append(pmClass.Particle([-5, 0, 0], [1, 0, 0], 100))
+#particleList.append(pmClass.Particle([-3, 1, 0], [0, -0.2, 0], 100))
 #numParticles = 2
 
 
@@ -104,6 +104,11 @@ for particle in particleList:
 initial.write("%f %f %f %f\n%f %f %f %f\n" % (volume[0] / 2, volume[1] / 2, volume[2] / 2, 1., - volume[0] / 2, - volume[1] / 2, - volume[2] / 2, 1.))
 initial.close()
 
+
+energyFile = open("energyResults.txt", "w")
+energyFile.write("a\tTotal\tpotential\tkinetic\t%% kinetic off\t%% error in energy\n")
+startE = 0
+
 print "Iterating..."
 a = startingA
 iterationStart = time.time()
@@ -142,9 +147,15 @@ while frameNo < maxFrameNo:
 
 	if shoot:
 		if outputSystemEnergy:	
-			accumulatedEnergy = debug.OutputTotalEnergy(particleList, potentialField, a, stepSize, volume)
+			energyResults = debug.OutputTotalEnergy(particleList, potentialField, a, stepSize, volume)
+			accumulatedEnergy = energyResults[0]
+			potentialE = energyResults[1]
+			ke = energyResults[2]
 			f.write("0 %d 0 %f\n" % (volume[2]/2, accumulatedEnergy))
-			print "\t", accumulatedEnergy
+			if startE == 0:
+				startE = accumulatedEnergy
+			energyFile.write("%f\t%f\t%f\t%f\t%f\t%f\n" % (a, accumulatedEnergy, potentialE, ke, (startE - accumulatedEnergy) / ke, (startE - accumulatedEnergy)/startE * 100))
+			print "\t", accumulatedEnergy, '\t potential=', potentialE, ' ke=', ke, '*ke off=', (startE - potentialE) / ke
 
 		if outputDensityField:
 			debug.OutputDensityField(volume, densityField)
@@ -173,8 +184,12 @@ while frameNo < maxFrameNo:
 			maxFrameNo = int(float(maxA - startingA) / float(stepSize))
 			sys.stdout.write("\n")
 
+energyFile.close()
+
+if outputSystemEnergy:
+	print 'startE=', startE, ' endE=', accumulatedEnergy, '\t difference percent=', (accumulatedEnergy-startE)/ startE * 100
+
 #------------------------------------------------#
-print "doing clustering analysis"
 
 
 

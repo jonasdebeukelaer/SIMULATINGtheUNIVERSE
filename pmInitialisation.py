@@ -30,7 +30,7 @@ def ComputeDisplacementVectors(shape, Lbox, a):
 				kSquare = float(kx**2 + ky**2 + kz**2) #* (2 * math.pi / Lbox)**2
 				k       = math.sqrt(kSquare)
 				if kSquare != 0:
-					powerValue = 10**(-4)
+					powerValue = 1
 					ak         = math.sqrt(powerValue) * random.gauss(0., 1.) / kSquare
 					bk         = math.sqrt(powerValue) * random.gauss(0., 1.) / kSquare
 				else:
@@ -111,7 +111,7 @@ def InitialiseParticles(volume, numParticles, positionDistribution, velocityDist
 					y = gridY - a * (yDisplacements[i][j][k])
 					z = gridZ - a * (zDisplacements[i][j][k])
 
-					print xDisplacements[i][j][k], yDisplacements[i][j][k], zDisplacements[i][j][k]
+					#print xDisplacements[i][j][k], yDisplacements[i][j][k], zDisplacements[i][j][k]
 
 					xMomentum = - (a - (deltaA / 2))**2 * (xDisplacements[i][j][k])
 					yMomentum = - (a - (deltaA / 2))**2 * (yDisplacements[i][j][k])

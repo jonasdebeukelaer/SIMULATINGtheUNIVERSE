@@ -44,11 +44,12 @@ def OutputTotalEnergy(particleList, potentialField, a, stepSize, volume):
 
 		potential += potentialField[xIndex][yIndex][zIndex] * particle.mass
 
-	potentialE  = 0.5 * potential
+	potentialE  = 0.5 * potential * a
 
-	totalMoms = [(part.halfStepMomentum[0]**2 + part.halfStepMomentum[1]**2 + part.halfStepMomentum[2]**2) * part.mass for part in particleList]
-	kinetic = sum(np.multiply(0.5 / (a + stepSize/2)**2, totalMoms))
-	return (potentialE + kinetic)
+	totalMoms = [(part.halfStepMomentum[0]**2 + part.halfStepMomentum[1]**2 + part.halfStepMomentum[2]**2) / part.mass for part in particleList]
+	kinetic = sum(np.multiply(0.5, totalMoms))
+
+	return [potentialE + kinetic, potentialE, kinetic]
 
 def OutputDensityField(volume, densityField):
 	densityFile = open("Densityresults/density_frame%d.3D" % (frameNo), "w")
