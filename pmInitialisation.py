@@ -7,6 +7,7 @@ import cmath
 import random
 
 
+
 def ComputeDisplacementVectors(nGrid, lBox, a):
 	xDisplacementFourier = np.zeros([nGrid, nGrid, (nGrid / 2) + 1], dtype = 'complex128')
 	yDisplacementFourier = np.zeros([nGrid, nGrid, (nGrid / 2) + 1], dtype = 'complex128')

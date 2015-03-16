@@ -5,6 +5,8 @@ import math
 import sys
 import pyfftw
 
+from operator import itemgetter
+
 def FindMeshIndex(position, nGrid):
 	index = math.floor(position + 0.5) + ((nGrid / 2) - 1)
 	if index == -1:
@@ -87,6 +89,7 @@ def SolvePotential(densityField, a, greensFunction, preComputeGreens):
 		densityFieldConvoluted = np.multiply(scaledGreensFunction, densityFFT)
 
 	potentialField = np.fft.irfftn(densityFieldConvoluted)
+
 	return potentialField
 
 def FindPlusMinus(meshIndex, nGrid):
@@ -142,3 +145,42 @@ def FindLocalDensity(particle, densityField):
 	zMesh = FindMeshIndex(particle.position[2], meshShape[2])
 
 	return densityField[xMesh][yMesh][zMesh]
+
+def OutputPowerSpectrum(densityField):
+	densityFFT = pyfftw.builders.rfftn(densityField, threads = helpers.GetNumberOfThreads())
+	densityFourier = densityFFT()
+	centeredDensityFourier = np.fft.fftshift(densityFourier)
+	kShape = centeredDensityFourier.shape
+	kRadii = [kShape[0]/2+1, kShape[1]/2+1, (kShape[2]-1)/2+1]
+	numGridBoxes = kShape[0] * kShape[1] * kShape[2]
+	distancesfromOrigin = list()
+
+	print kShape, numGridBoxes
+
+
+	for i in range(kRadii[0]):
+		kiSquare = (i-kRadii[0])**2
+		for j in range(kRadii[1]):
+			kjSquare = (j-kRadii[1])**2
+			for k in range(kRadii[2]):
+				kkSquare = (k-kRadii[2])**2
+				kr = math.sqrt(kiSquare + kjSquare + kkSquare)
+				distancesfromOrigin.append([kr, (centeredDensityFourier[i][j][k].real)**2 + (centeredDensityFourier[i][j][k].imag)**2])
+
+	
+	distancesfromOrigin = sorted(distancesfromOrigin, key=itemgetter(0))
+
+	dk = 1
+	binnedPowerSpectrum = [0] * (kShape[2] + 1)
+	topK = 1
+
+	print distancesfromOrigin[:][0]
+	for i in distancesfromOrigin:
+		kr = i[0]
+		if kr < topK:
+			binnedPowerSpectrum[topK-1] += i[0]
+			print kr, topK
+		else:
+			topK += 1
+
+	print binnedPowerSpectrum
