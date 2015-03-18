@@ -36,8 +36,11 @@ startingA              = 0.100
 maxA                   = 1.000
 stepSize               = 0.001
 
-shootEvery             = 2
+shootEvery             = 10
 outputAsSphere         = False
+
+outputPowerSpectrum    = True
+outputPowerHeatMap     = True
 
 #----------------DEBUG PARAMETERS----------------#
 
@@ -112,6 +115,13 @@ a = startingA
 iterationStart = time.time()
 frameNo = 1
 maxFrameNo = int((maxA - startingA) / stepSize) + 1
+
+if outputPowerSpectrum:
+	initialPowerSpectrum = core.CalculatePowerSpectrum(densityField, nGrid)
+	if outputPowerHeatMap:
+		powerSpectrumHeatMap = [initialPowerSpectrum]
+		aArray = [a]
+
 while frameNo < maxFrameNo:
 
 	shoot = True if (frameNo % shootEvery) == 0 else False
@@ -160,6 +170,11 @@ while frameNo < maxFrameNo:
 		if outputPotentialFieldXY:
 			debug.OutputPotentialFieldXY(potentialField, particleList, nGrid, frameNo, gridResolution)
 
+		if outputPowerSpectrum and outputPowerHeatMap:
+			powerSpectrum = core.CalculatePowerSpectrum(densityField, nGrid)
+			powerSpectrumHeatMap.append(powerSpectrum)
+			aArray.append(a)
+
 		f.write("%f %f %f %f\n%f %f %f %f\n" % (nGrid / 2, nGrid / 2, nGrid / 2, 0., - nGrid / 2, - nGrid / 2, - nGrid / 2, 0.))
 		f.close()
 
@@ -172,6 +187,12 @@ energyFile.close()
 
 if outputSystemEnergy:
 	print 'startE=', startE, ' endE=', accumulatedEnergy, '\t difference percent=', (accumulatedEnergy-startE)/ startE * 100
+
+if outputPowerSpectrum:
+	if outputPowerHeatMap:
+		core.OutputPowerSpectrumHeatMap(powerSpectrumHeatMap, aArray, nGrid, lBox)
+	finalPowerSpectrum = core.CalculatePowerSpectrum(densityField, nGrid)
+	core.OutputPowerSpectrum(initialPowerSpectrum, finalPowerSpectrum, startingA, nGrid, lBox)
 
 #------------------------------------------------#
 
