@@ -7,6 +7,10 @@ import pyfftw
 
 from operator import itemgetter
 
+import plotly as py
+from plotly.graph_objs import *
+py.tools.set_credentials_file(username='jonasdb', api_key='2r0kiy0eq1', stream_ids=['fs43hhoxgj', '86nsdjyshj'])
+
 def FindMeshIndex(position, nGrid):
 	index = math.floor(position + 0.5) + ((nGrid / 2) - 1)
 	if index == -1:
@@ -146,41 +150,58 @@ def FindLocalDensity(particle, densityField):
 
 	return densityField[xMesh][yMesh][zMesh]
 
-def OutputPowerSpectrum(densityField):
+def CalculatePowerSpectrum(densityField, nGrid):
 	densityFFT = pyfftw.builders.rfftn(densityField, threads = helpers.GetNumberOfThreads())
 	densityFourier = densityFFT()
 	centeredDensityFourier = np.fft.fftshift(densityFourier)
 	kShape = centeredDensityFourier.shape
 	kRadii = [kShape[0]/2+1, kShape[1]/2+1, (kShape[2]-1)/2+1]
 	numGridBoxes = kShape[0] * kShape[1] * kShape[2]
+	centeredDensityFourier = centeredDensityFourier / nGrid**3
 	distancesfromOrigin = list()
 
-	print kShape, numGridBoxes
 
 
-	for i in range(kRadii[0]):
+	for i in range(0, kShape[0]):
 		kiSquare = (i-kRadii[0])**2
-		for j in range(kRadii[1]):
+		for j in range(0, kShape[1]):
 			kjSquare = (j-kRadii[1])**2
-			for k in range(kRadii[2]):
+			for k in range(0, kShape[2]):
 				kkSquare = (k-kRadii[2])**2
 				kr = math.sqrt(kiSquare + kjSquare + kkSquare)
-				distancesfromOrigin.append([kr, (centeredDensityFourier[i][j][k].real)**2 + (centeredDensityFourier[i][j][k].imag)**2])
+				if kr != 0:
+					distancesfromOrigin.append([kr, (centeredDensityFourier[i][j][k].real)**2 + (centeredDensityFourier[i][j][k].imag)**2])
 
 	
 	distancesfromOrigin = sorted(distancesfromOrigin, key=itemgetter(0))
 
-	dk = 1
-	binnedPowerSpectrum = [0] * (kShape[2] + 1)
+	numberFourierModes = int(math.sqrt(3)*kRadii[0])
+	binnedPowerSpectrum = np.zeros(numberFourierModes)
 	topK = 1
 
-	print distancesfromOrigin[:][0]
 	for i in distancesfromOrigin:
 		kr = i[0]
-		if kr < topK:
-			binnedPowerSpectrum[topK-1] += i[0]
-			print kr, topK
-		else:
+		if kr > topK:
 			topK += 1
+		binnedPowerSpectrum[topK-1] += i[1]
 
-	print binnedPowerSpectrum
+	normalisedBinnedPowerSpectrum = binnedPowerSpectrum / max(binnedPowerSpectrum)
+
+	return list(binnedPowerSpectrum)
+
+def OutputPowerSpectrumHeatMap(powerSpectrumHeatMap, aArray, nGrid, lBox):
+	numberFourierModes = int(math.sqrt(3)*(nGrid/2+1))
+
+	heatmap  = Heatmap(z=powerSpectrumHeatMap, y=aArray, x=[i for i in range(1, numberFourierModes)], colorscale='Greens')
+	layout   = Layout(title='Power Spectrum Evolution In Time (nGrid=%s, lBox=%s)' % (nGrid, lBox), xaxis=XAxis(title='Fourier Mode'), yaxis=YAxis(title='a'))
+	data     = Data([heatmap])
+	fig      = Figure(data=data, layout=layout)
+	plot_url = py.plotly.plot(fig, filename='Power Spectrum Evolution (nGrid=%s, lBox=%s)' % (nGrid, lBox), world_readable=False)
+
+def OutputPowerSpectrum(initialPowerSpectrum, finalPowerSpectrum, startingA, nGrid, lBox):
+	chart1  = Bar(x=[i for i in range(1, len(finalPowerSpectrum))], y=initialPowerSpectrum, name='Initial (a=%d)' % (startingA))
+	chart2 = Bar(x=[i for i in range(1, len(finalPowerSpectrum))], y=finalPowerSpectrum, name='Final (a=1)')
+	layout = Layout(title='Power Spectrum of a Universe Simulation (nGrid=%s, lBox=%s)' % (nGrid, lBox), xaxis=XAxis(title='Fourier Mode'), barmode='group')
+	data = Data([chart1, chart2])
+	fig = Figure(data=data, layout=layout)
+	plot_url = py.plotly.plot(fig, filename='InitialFinal Power Spectrums (nGrid=%s, lBox=%s)' % (nGrid, lBox), world_readable=False)
