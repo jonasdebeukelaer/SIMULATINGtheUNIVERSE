@@ -15,13 +15,13 @@ import glob
 from pync import Notifier
 
 print "Seeding..."
-random.seed(30091874) #30091875)		#
+random.seed(30091874)
 print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-nGrid                  = 10
-lBox 				   = 100
+nGrid                  = 100
+lBox 				   = 200
 
 numParticles           = 0
 positionDistribution   = pmClass.PositionDist.zeldovich
@@ -63,7 +63,7 @@ if hasCenterParticle:
 	centerParticle = pmClass.Particle([0., 24.64, 0.], [0., -1., 0.,], 20)
 	particleList.append(centerParticle)
 	numParticles += 1
-print"Done\n"
+print"\nDone\n"
 
 print "Determining mesh shape..."
 densityField = core.CalculateDensityField(nGrid, particleList)
@@ -101,7 +101,6 @@ for particle in particleList:
 	initial.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], math.log(localDensity)))
 initial.write("%f %f %f %f\n%f %f %f %f\n" % (nGrid / 2, nGrid / 2, nGrid / 2, 0., - nGrid / 2, - nGrid / 2, - nGrid / 2, 0.))
 initial.close()
-
 
 energyFile = open("energyResults.txt", "w")
 energyFile.write("a\tTotal\tpotential\tkinetic\t%% kinetic off\t%% error in energy\n")
