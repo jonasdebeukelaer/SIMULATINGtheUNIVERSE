@@ -1,18 +1,21 @@
 import pmClass
 import pmCore as core
+import pmHelpers as helpers
 
 import numpy as np
 import math
 import cmath
 import random
-
-
+import time
 
 def ComputeDisplacementVectors(nGrid, lBox, a):
 	xDisplacementFourier = np.zeros([nGrid, nGrid, (nGrid / 2) + 1], dtype = 'complex128')
 	yDisplacementFourier = np.zeros([nGrid, nGrid, (nGrid / 2) + 1], dtype = 'complex128')
 	zDisplacementFourier = np.zeros([nGrid, nGrid, (nGrid / 2) + 1], dtype = 'complex128')
 
+	print 'Calculating displacements...'
+	displacementStart = time.time()
+	displacementsCalculated = 0
 	for l in range(0, nGrid):
 		if l < (nGrid / 2):
 			kx = 2 * math.pi * l / nGrid
@@ -27,6 +30,7 @@ def ComputeDisplacementVectors(nGrid, lBox, a):
 
 			for n in range(0, (nGrid / 2) + 1):
 				kz = 2 * math.pi * n / nGrid
+				displacementsCalculated += 1
 
 				kSquare = float(kx**2 + ky**2 + kz**2) #* (2 * math.pi / Lbox)**2
 				k       = math.sqrt(kSquare)
@@ -42,6 +46,8 @@ def ComputeDisplacementVectors(nGrid, lBox, a):
 				xDisplacementFourier[l][m][n] = ck * kx
 				yDisplacementFourier[l][m][n] = ck * ky
 				zDisplacementFourier[l][m][n] = ck * kz
+
+				helpers.OutputPercentage(displacementsCalculated, nGrid**2 * ((nGrid / 2) + 1), time.time() - displacementStart)
 
 	xDisplacementReal = np.fft.irfftn(xDisplacementFourier) * nGrid**3
 	yDisplacementReal = np.fft.irfftn(yDisplacementFourier) * nGrid**3
@@ -98,6 +104,9 @@ def InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistr
 		yDisplacements = (displacementVectors[1])
 		zDisplacements = (displacementVectors[2])
 
+		print '\nCreating particles...'
+		creationStart = time.time()
+		particlesCreated = 0
 		gridX = - nGrid / 2
 		for i in range(0, nGrid):
 			gridX += 1
@@ -107,6 +116,7 @@ def InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistr
 				gridZ = - nGrid / 2
 				for k in range(0, nGrid): 
 					gridZ += 1
+					particlesCreated += 1
 				
 					x = gridX - a * (xDisplacements[i][j][k])
 					y = gridY - a * (yDisplacements[i][j][k])
@@ -119,6 +129,7 @@ def InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistr
 					newParticle = pmClass.Particle([x, y, z], [xMomentum, yMomentum, zMomentum], 1)
 					core.PositionCorrect(newParticle, nGrid)
 					particleList.append(newParticle)
+					helpers.OutputPercentage(particlesCreated, nGrid**3, time.time() - creationStart)
 
 	elif positionDistribution == pmClass.PositionDist.sineWave1D:
 		wavelength = nGrid

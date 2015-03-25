@@ -15,7 +15,7 @@ import glob
 from pync import Notifier
 
 print "Seeding..."
-random.seed(30091874) #30091875)		#
+random.seed(30091874)
 print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
@@ -66,7 +66,7 @@ if hasCenterParticle:
 	centerParticle = pmClass.Particle([0., 24.64, 0.], [0., -1., 0.,], 20)
 	particleList.append(centerParticle)
 	numParticles += 1
-print"Done\n"
+print"\nDone\n"
 
 print "Determining mesh shape..."
 densityField = core.CalculateDensityField(nGrid, particleList)
@@ -105,6 +105,13 @@ for particle in particleList:
 initial.write("%f %f %f %f\n%f %f %f %f\n" % (nGrid / 2, nGrid / 2, nGrid / 2, 0., - nGrid / 2, - nGrid / 2, - nGrid / 2, 0.))
 initial.close()
 
+<<<<<<< HEAD
+=======
+energyFile = open("energyResults.txt", "w")
+energyFile.write("a\tTotal\tpotential\tkinetic\t%% kinetic off\t%% error in energy\n")
+startE = 0
+
+>>>>>>> 3431027bb6d183acb0fb8f30286691438d661a16
 print "Iterating..."
 a = startingA
 iterationStart = time.time()
