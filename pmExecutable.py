@@ -33,7 +33,7 @@ maxVelocity            = 1
 hasCenterParticle      = False
 
 startingA              = 0.100
-maxA                   = 1.000
+maxA                   = 0.100
 stepSize               = 0.001
 
 shootEvery             = 300
@@ -46,7 +46,7 @@ outputPowerHeatMap     = False
 
 outputPotentialFieldXY = False
 outputSystemEnergy     = False
-outputDensityField     = False
+outputDensityField     = True
 
 #------------------------------------------------#
 
@@ -58,9 +58,9 @@ if positionDistribution == pmClass.PositionDist.zeldovich:
 	numParticles = len(particleList)
 
 #particleList = []
-#particleList.append(pmClass.Particle([-5, 0, 0], [1, 0, 0], 100))
-#particleList.append(pmClass.Particle([-3, 1, 0], [0, -0.2, 0], 100))
-#numParticles = 1
+#particleList.append(pmClass.Particle([-1.3, 0.2, 0], [0, 0, 0], 1))
+#particleList.append(pmClass.Particle([0.4, -0.8, 0], [0, 0, 0], 1))
+#numParticles = 2
 
 if hasCenterParticle:
 	centerParticle = pmClass.Particle([0., 24.64, 0.], [0., -1., 0.,], 20)
@@ -105,6 +105,13 @@ for particle in particleList:
 initial.write("%f %f %f %f\n%f %f %f %f\n" % (nGrid / 2, nGrid / 2, nGrid / 2, 0., - nGrid / 2, - nGrid / 2, - nGrid / 2, 0.))
 initial.close()
 
+<<<<<<< HEAD
+=======
+energyFile = open("energyResults.txt", "w")
+energyFile.write("a\tTotal\tpotential\tkinetic\t%% kinetic off\t%% error in energy\n")
+startE = 0
+
+>>>>>>> 4f8ce706da896c7f47fd4edbf1cbf77b9e9f5f9b
 print "Iterating..."
 a = startingA
 iterationStart = time.time()

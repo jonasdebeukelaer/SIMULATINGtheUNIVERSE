@@ -25,7 +25,7 @@ def CalculateDensityField(nGrid, particleList):
 		yMesh = FindMeshIndex(particle.position[1], nGrid)
 		zMesh = FindMeshIndex(particle.position[2], nGrid)
 
-		densityFieldMesh[xMesh][yMesh][zMesh] += particle.mass
+		densityFieldMesh[xMesh][yMesh][zMesh] += 1
 
 	return densityFieldMesh
 
