@@ -33,7 +33,7 @@ maxVelocity            = 1
 hasCenterParticle      = False
 
 startingA              = 0.100
-maxA                   = 0.100
+maxA                   = 1.000
 stepSize               = 0.001
 
 shootEvery             = 300
