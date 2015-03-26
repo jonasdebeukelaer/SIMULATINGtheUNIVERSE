@@ -60,6 +60,6 @@ def OutputDensityField(nGrid, densityField, frameNo):
 			for k in range(0, nGrid):
 				cellDensity = densityField[i][j][k]
 				if cellDensity != 0:
-					densityFile.write("%f %f %f %f\n" % (i-(nGrid/2-1), j-(nGrid/2-1), k-(nGrid/2-1), abs(cellDensity)))
+					densityFile.write("%f %f %f %f\n" % (i-(nGrid/2-1), j-(nGrid/2-1), k-(nGrid/2-1), 1.0))#abs(cellDensity)))
 
 	densityFile.close()

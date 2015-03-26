@@ -20,8 +20,8 @@ print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-nGrid                  = 100
-lBox 				   = 200
+nGrid                  = 4
+lBox 				   = 50
 
 numParticles           = 0
 positionDistribution   = pmClass.PositionDist.zeldovich
@@ -33,34 +33,34 @@ maxVelocity            = 1
 hasCenterParticle      = False
 
 startingA              = 0.100
-maxA                   = 1.000
+maxA                   = 0.100
 stepSize               = 0.001
 
-shootEvery             = 10
+shootEvery             = 2
 outputAsSphere         = False
 
-outputPowerSpectrum    = True
-outputPowerHeatMap     = True
+outputPowerSpectrum    = False
+outputPowerHeatMap     = False
 
 #----------------DEBUG PARAMETERS----------------#
 
 outputPotentialFieldXY = False
 outputSystemEnergy     = False
-outputDensityField     = False
+outputDensityField     = True
 
 #------------------------------------------------#
 
 #------------INITIALISATION FUNCTIONS------------#
 
 print "Initialising particles..."
-particleList = initialisation.InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA, stepSize, lBox)
-if positionDistribution == pmClass.PositionDist.zeldovich:
-	numParticles = len(particleList)
+#particleList = initialisation.InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA, stepSize, lBox)
+#if positionDistribution == pmClass.PositionDist.zeldovich:
+	#numParticles = len(particleList)
 
-#particleList = []
-#particleList.append(pmClass.Particle([-5, 0, 0], [1, 0, 0], 100))
-#particleList.append(pmClass.Particle([-3, 1, 0], [0, -0.2, 0], 100))
-#numParticles = 2
+particleList = []
+particleList.append(pmClass.Particle([-1.3, 0.2, 0], [0, 0, 0], 1))
+particleList.append(pmClass.Particle([0.4, -0.8, 0], [0, 0, 0], 1))
+numParticles = 2
 
 if hasCenterParticle:
 	centerParticle = pmClass.Particle([0., 24.64, 0.], [0., -1., 0.,], 20)
@@ -104,6 +104,8 @@ for particle in particleList:
 	initial.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], math.log(localDensity)))
 initial.write("%f %f %f %f\n%f %f %f %f\n" % (nGrid / 2, nGrid / 2, nGrid / 2, 0., - nGrid / 2, - nGrid / 2, - nGrid / 2, 0.))
 initial.close()
+
+debug.OutputDensityField(nGrid, densityField, 0)
 
 energyFile = open("energyResults.txt", "w")
 energyFile.write("a\tTotal\tpotential\tkinetic\t%% kinetic off\t%% error in energy\n")
