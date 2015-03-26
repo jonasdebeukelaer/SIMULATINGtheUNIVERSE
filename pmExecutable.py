@@ -20,7 +20,7 @@ print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-nGrid                  = 20
+nGrid                  = 30
 lBox 				   = 200
 
 numParticles           = 0
@@ -105,10 +105,13 @@ for particle in particleList:
 initial.write("%f %f %f %f\n%f %f %f %f\n" % (nGrid / 2, nGrid / 2, nGrid / 2, 0., - nGrid / 2, - nGrid / 2, - nGrid / 2, 0.))
 initial.close()
 
+<<<<<<< HEAD
+=======
 energyFile = open("energyResults.txt", "w")
 energyFile.write("a\tTotal\tpotential\tkinetic\t%% kinetic off\t%% error in energy\n")
 startE = 0
 
+>>>>>>> 4f8ce706da896c7f47fd4edbf1cbf77b9e9f5f9b
 print "Iterating..."
 a = startingA
 iterationStart = time.time()
@@ -140,6 +143,8 @@ while frameNo < maxFrameNo:
 	potentialField = core.SolvePotential(densityField, a, greensFunction, preComputeGreens)
 
 	accumulatedEnergy = 0
+	if frameNo == maxFrameNo/2:
+		middlePowerSpectrum = core.CalculatePowerSpectrum(densityField, nGrid, lBox)
 
 	for i, particle in enumerate(particleList):
 
@@ -194,7 +199,7 @@ if outputPowerSpectrum:
 	if outputPowerHeatMap:
 		core.OutputPowerSpectrumHeatMap(powerSpectrumHeatMap, aArray, nGrid, lBox)
 	finalPowerSpectrum = core.CalculatePowerSpectrum(densityField, nGrid, lBox)
-	core.OutputPowerSpectrum(initialPowerSpectrum, finalPowerSpectrum, startingA, nGrid, lBox)
+	core.OutputPowerSpectrum(initialPowerSpectrum, middlePowerSpectrum, finalPowerSpectrum, startingA, nGrid, lBox)
 
 #------------------------------------------------#
 

@@ -160,7 +160,7 @@ def CalculatePowerSpectrum(densityField, nGrid, lBox):
 	kShape = centeredDensityFourier.shape
 	kRadii = [kShape[0]/2, kShape[1]/2, kShape[2]]
 	numGridBoxes = kShape[0] * kShape[1] * kShape[2]
-	centeredDensityFourier = centeredDensityFourier / nGrid**3
+	#centeredDensityFourier = centeredDensityFourier / nGrid**3
 
 	distancesfromOrigin = list()
 
@@ -177,8 +177,8 @@ def CalculatePowerSpectrum(densityField, nGrid, lBox):
 
 	distancesfromOrigin = sorted(distancesfromOrigin, key=itemgetter(0))
 
-	resolution = 5
-	numberFourierModes = int((lBox/resolution)+1)
+	resolution = 4
+	numberFourierModes = int((1.0*lBox/resolution)+1)
 	binnedPowerSpectrum = np.zeros(numberFourierModes)
 	bin = 0
 	topK = 0
@@ -195,7 +195,7 @@ def CalculatePowerSpectrum(densityField, nGrid, lBox):
 		binnedPowerSpectrum[bin] += i[1]
 
 	normalisedBinnedPowerSpectrum = binnedPowerSpectrum / max(binnedPowerSpectrum)
-
+	binnedPowerSpectrum = reversed(binnedPowerSpectrum)
 	return list(binnedPowerSpectrum)
 
 def OutputPowerSpectrumHeatMap(powerSpectrumHeatMap, aArray, nGrid, lBox):
@@ -207,11 +207,14 @@ def OutputPowerSpectrumHeatMap(powerSpectrumHeatMap, aArray, nGrid, lBox):
 	fig      = Figure(data=data, layout=layout)
 	plot_url = py.plotly.plot(fig, filename='Power Spectrum Evolution (nGrid=%s, lBox=%s)' % (nGrid, lBox), world_readable=True)
 
-def OutputPowerSpectrum(initialPowerSpectrum, finalPowerSpectrum, startingA, nGrid, lBox):
-	resolution = 5
-	chart1   = Scatter(x=[float(i)*resolution for i in range(1, len(finalPowerSpectrum))], y=initialPowerSpectrum, name='Initial (a=%d)' % (startingA), mode='line+marker', line=Line(shape='spline'))
-	chart2   = Scatter(x=[float(i)*resolution for i in range(1, len(finalPowerSpectrum))], y=finalPowerSpectrum, name='Final (a=1)',  mode='line+marker', line=Line(shape='spline'))
+def OutputPowerSpectrum(initialPowerSpectrum, middlePowerSpectrum, finalPowerSpectrum, startingA, nGrid, lBox):
+	resolution = 4
+	xScale     = [float(i)*resolution/lBox for i in range(1, len(finalPowerSpectrum))]
+
+	chart1   = Scatter(x=xScale, y=initialPowerSpectrum, name='Initial (a=%d)' % (startingA), mode='line+marker', line=Line(shape='spline'))
+	chart2   = Scatter(x=xScale, y=middlePowerSpectrum, name='Halfway (a=0.5)',  mode='line+marker', line=Line(shape='spline'))
+	chart3   = Scatter(x=xScale, y=finalPowerSpectrum, name='Final (a=1)',  mode='line+marker', line=Line(shape='spline'))
 	layout   = Layout(title='Power Spectrum of a Universe Simulation (nGrid=%s, lBox=%s)' % (nGrid, lBox), xaxis=XAxis(title='$Fourier Mode /Mpcs^{-1}$', rangemode='tozero'), barmode='group')
-	data     = Data([chart1, chart2])
+	data     = Data([chart1, chart2, chart3])
 	fig      = Figure(data=data, layout=layout)
 	plot_url = py.plotly.plot(fig, filename='InitialFinal Power Spectrums (nGrid=%s, lBox=%s)' % (nGrid, lBox), world_readable=True)
