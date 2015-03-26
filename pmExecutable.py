@@ -20,8 +20,8 @@ print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-nGrid                  = 4
-lBox 				   = 50
+nGrid                  = 20
+lBox 				   = 200
 
 numParticles           = 0
 positionDistribution   = pmClass.PositionDist.zeldovich
@@ -36,10 +36,10 @@ startingA              = 0.100
 maxA                   = 0.100
 stepSize               = 0.001
 
-shootEvery             = 2
+shootEvery             = 300
 outputAsSphere         = False
 
-outputPowerSpectrum    = False
+outputPowerSpectrum    = True
 outputPowerHeatMap     = False
 
 #----------------DEBUG PARAMETERS----------------#
@@ -53,14 +53,14 @@ outputDensityField     = True
 #------------INITIALISATION FUNCTIONS------------#
 
 print "Initialising particles..."
-#particleList = initialisation.InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA, stepSize, lBox)
-#if positionDistribution == pmClass.PositionDist.zeldovich:
-	#numParticles = len(particleList)
+particleList = initialisation.InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA, stepSize, lBox)
+if positionDistribution == pmClass.PositionDist.zeldovich:
+	numParticles = len(particleList)
 
-particleList = []
-particleList.append(pmClass.Particle([-1.3, 0.2, 0], [0, 0, 0], 1))
-particleList.append(pmClass.Particle([0.4, -0.8, 0], [0, 0, 0], 1))
-numParticles = 2
+#particleList = []
+#particleList.append(pmClass.Particle([-1.3, 0.2, 0], [0, 0, 0], 1))
+#particleList.append(pmClass.Particle([0.4, -0.8, 0], [0, 0, 0], 1))
+#numParticles = 2
 
 if hasCenterParticle:
 	centerParticle = pmClass.Particle([0., 24.64, 0.], [0., -1., 0.,], 20)
@@ -105,8 +105,6 @@ for particle in particleList:
 initial.write("%f %f %f %f\n%f %f %f %f\n" % (nGrid / 2, nGrid / 2, nGrid / 2, 0., - nGrid / 2, - nGrid / 2, - nGrid / 2, 0.))
 initial.close()
 
-debug.OutputDensityField(nGrid, densityField, 0)
-
 energyFile = open("energyResults.txt", "w")
 energyFile.write("a\tTotal\tpotential\tkinetic\t%% kinetic off\t%% error in energy\n")
 startE = 0
@@ -117,8 +115,13 @@ iterationStart = time.time()
 frameNo = 1
 maxFrameNo = int((maxA - startingA) / stepSize) + 1
 
+if outputSystemEnergy:
+	energyFile = open("energyResults.txt", "w")
+	energyFile.write("a\tTotal\tpotential\tkinetic\t%% kinetic off\t%% error in energy\n")
+	startE = 0
+
 if outputPowerSpectrum:
-	initialPowerSpectrum = core.CalculatePowerSpectrum(densityField, nGrid)
+	initialPowerSpectrum = core.CalculatePowerSpectrum(densityField, nGrid, lBox)
 	if outputPowerHeatMap:
 		powerSpectrumHeatMap = [initialPowerSpectrum]
 		aArray = [a]
@@ -150,9 +153,8 @@ while frameNo < maxFrameNo:
 			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], math.log(localDensity)))
 			if outputAsSphere:
 				r = math.sqrt(particle.position[0]**2 + particle.position[1]**2 + particle.position[2]**2)
-				if r <= volume[0]/2:
+				if r <= nGrid/2:
 					sphereF.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], math.log(localDensity)))
-				
 	if shoot:
 		if outputSystemEnergy:	
 			energyResults = debug.OutputTotalEnergy(particleList, potentialField, a, stepSize, nGrid)
@@ -169,10 +171,10 @@ while frameNo < maxFrameNo:
 			debug.OutputDensityField(nGrid, densityField, frameNo)
 
 		if outputPotentialFieldXY:
-			debug.OutputPotentialFieldXY(potentialField, particleList, nGrid, frameNo, gridResolution)
+			debug.OutputPotentialFieldXY(potentialField, particleList, nGrid, frameNo)
 
 		if outputPowerSpectrum and outputPowerHeatMap:
-			powerSpectrum = core.CalculatePowerSpectrum(densityField, nGrid)
+			powerSpectrum = core.CalculatePowerSpectrum(densityField, nGrid, lBox)
 			powerSpectrumHeatMap.append(powerSpectrum)
 			aArray.append(a)
 
@@ -184,17 +186,17 @@ while frameNo < maxFrameNo:
 	a       += stepSize
 	frameNo += 1
 
-energyFile.close()
-
 if outputSystemEnergy:
 	print 'startE=', startE, ' endE=', accumulatedEnergy, '\t difference percent=', (accumulatedEnergy-startE)/ startE * 100
+	energyFile.close()
 
 if outputPowerSpectrum:
 	if outputPowerHeatMap:
 		core.OutputPowerSpectrumHeatMap(powerSpectrumHeatMap, aArray, nGrid, lBox)
-	finalPowerSpectrum = core.CalculatePowerSpectrum(densityField, nGrid)
+	finalPowerSpectrum = core.CalculatePowerSpectrum(densityField, nGrid, lBox)
 	core.OutputPowerSpectrum(initialPowerSpectrum, finalPowerSpectrum, startingA, nGrid, lBox)
 
 #------------------------------------------------#
-print ''
+
+print '\n', time.time() - iterationStart
 Notifier.notify('The universe has been solved', title = 'Thanks to the finest minds of the 21st century...')

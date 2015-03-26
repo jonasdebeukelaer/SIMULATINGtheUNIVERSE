@@ -92,7 +92,9 @@ def SolvePotential(densityField, a, greensFunction, preComputeGreens):
 		scaledGreensFunction = np.multiply(3 / (8 * a), greensFunction)
 		densityFieldConvoluted = np.multiply(scaledGreensFunction, densityFFT)
 
-	potentialField = np.fft.irfftn(densityFieldConvoluted)
+	potentialReal = pyfftw.builders.irfftn(densityFieldConvoluted, threads = helpers.GetNumberOfThreads())
+	potentialField = potentialReal()
+	#potentialField = np.fft.irfftn(densityFieldConvoluted)
 
 	return potentialField
 
@@ -150,14 +152,16 @@ def FindLocalDensity(particle, densityField):
 
 	return densityField[xMesh][yMesh][zMesh]
 
-def CalculatePowerSpectrum(densityField, nGrid):
+def CalculatePowerSpectrum(densityField, nGrid, lBox):
 	densityFFT = pyfftw.builders.rfftn(densityField, threads = helpers.GetNumberOfThreads())
 	densityFourier = densityFFT()
 	centeredDensityFourier = np.fft.fftshift(densityFourier)
+
 	kShape = centeredDensityFourier.shape
-	kRadii = [kShape[0]/2+1, kShape[1]/2+1, (kShape[2]-1)/2+1]
+	kRadii = [kShape[0]/2, kShape[1]/2, kShape[2]]
 	numGridBoxes = kShape[0] * kShape[1] * kShape[2]
 	centeredDensityFourier = centeredDensityFourier / nGrid**3
+
 	distancesfromOrigin = list()
 
 	for i in range(0, kShape[0]):
@@ -165,40 +169,49 @@ def CalculatePowerSpectrum(densityField, nGrid):
 		for j in range(0, kShape[1]):
 			kjSquare = (j-kRadii[1])**2
 			for k in range(0, kShape[2]):
-				kkSquare = (k-kRadii[2])**2
+				kkSquare = k**2
 				kr = math.sqrt(kiSquare + kjSquare + kkSquare)
+				physicalK = kr / nGrid * lBox
 				if kr != 0:
-					distancesfromOrigin.append([kr, (centeredDensityFourier[i][j][k].real)**2 + (centeredDensityFourier[i][j][k].imag)**2])
-	
+					distancesfromOrigin.append([physicalK, math.sqrt((centeredDensityFourier[i][j][k].real)**2 + (centeredDensityFourier[i][j][k].imag)**2)])
+
 	distancesfromOrigin = sorted(distancesfromOrigin, key=itemgetter(0))
 
-	numberFourierModes = int(math.sqrt(3)*kRadii[0])
+	resolution = 5
+	numberFourierModes = int((lBox/resolution)+1)
 	binnedPowerSpectrum = np.zeros(numberFourierModes)
-	topK = 1
-
+	bin = 0
+	topK = 0
+	NumInBin = 0
 	for i in distancesfromOrigin:
-		kr = i[0]
-		if kr > topK:
-			topK += 1
-		binnedPowerSpectrum[topK-1] += i[1]
+		physicalK = i[0]
+		if physicalK > topK:
+			if binnedPowerSpectrum[bin] != 0:
+				binnedPowerSpectrum[bin] = float(binnedPowerSpectrum[bin]) / NumInBin
+			topK += resolution
+			bin += 1
+			NumInBin = 0
+		NumInBin += 1
+		binnedPowerSpectrum[bin] += i[1]
 
 	normalisedBinnedPowerSpectrum = binnedPowerSpectrum / max(binnedPowerSpectrum)
 
 	return list(binnedPowerSpectrum)
 
 def OutputPowerSpectrumHeatMap(powerSpectrumHeatMap, aArray, nGrid, lBox):
-	numberFourierModes = int(math.sqrt(3)*(nGrid/2+1))
+	numberFourierModes = int(math.sqrt(3)*(nGrid/2+1)+1)
 
-	heatmap  = Heatmap(z=powerSpectrumHeatMap, y=aArray, x=[(float(i) / nGrid) for i in range(1, numberFourierModes)], colorscale='Greens')
-	layout   = Layout(title='Power Spectrum Evolution In Time (nGrid=%s, lBox=%s)' % (nGrid, lBox), xaxis=XAxis(title='Fourier Mode'), yaxis=YAxis(title='a'))
+	heatmap  = Heatmap(z=powerSpectrumHeatMap, y=aArray, x=[float(i)*lBox/nGrid for i in range(1, numberFourierModes)], colorscale='Greens')
+	layout   = Layout(title='Power Spectrum Evolution In Time (nGrid=%s, lBox=%s)' % (nGrid, lBox), xaxis=XAxis(title='$Fourier Mode /Mpcs^{-1}$'), yaxis=YAxis(title='Scale Factor (a)'))
 	data     = Data([heatmap])
 	fig      = Figure(data=data, layout=layout)
 	plot_url = py.plotly.plot(fig, filename='Power Spectrum Evolution (nGrid=%s, lBox=%s)' % (nGrid, lBox), world_readable=True)
 
 def OutputPowerSpectrum(initialPowerSpectrum, finalPowerSpectrum, startingA, nGrid, lBox):
-	chart1  = Bar(x=[(float(i) / nGrid) for i in range(1, len(finalPowerSpectrum))], y=initialPowerSpectrum, name='Initial (a=%d)' % (startingA))
-	chart2 = Bar(x=[(float(i) / nGrid) for i in range(1, len(finalPowerSpectrum))], y=finalPowerSpectrum, name='Final (a=1)')
-	layout = Layout(title='Power Spectrum of a Universe Simulation (nGrid=%s, lBox=%s)' % (nGrid, lBox), xaxis=XAxis(title='Fourier Mode'), barmode='group')
-	data = Data([chart1, chart2])
-	fig = Figure(data=data, layout=layout)
+	resolution = 5
+	chart1   = Scatter(x=[float(i)*resolution for i in range(1, len(finalPowerSpectrum))], y=initialPowerSpectrum, name='Initial (a=%d)' % (startingA), mode='line+marker', line=Line(shape='spline'))
+	chart2   = Scatter(x=[float(i)*resolution for i in range(1, len(finalPowerSpectrum))], y=finalPowerSpectrum, name='Final (a=1)',  mode='line+marker', line=Line(shape='spline'))
+	layout   = Layout(title='Power Spectrum of a Universe Simulation (nGrid=%s, lBox=%s)' % (nGrid, lBox), xaxis=XAxis(title='$Fourier Mode /Mpcs^{-1}$', rangemode='tozero'), barmode='group')
+	data     = Data([chart1, chart2])
+	fig      = Figure(data=data, layout=layout)
 	plot_url = py.plotly.plot(fig, filename='InitialFinal Power Spectrums (nGrid=%s, lBox=%s)' % (nGrid, lBox), world_readable=True)

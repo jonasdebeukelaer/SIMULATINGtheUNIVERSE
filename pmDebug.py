@@ -11,21 +11,18 @@ def OutputPotentialFieldXY(potentialField, particleList, nGrid, timeStep):
 		for j in range(0, nGrid):
 			for k in range(0, nGrid):
 				potentialValue = potentialField[i][j][k]
-				if i % 2 == 0 and j % 2 == 0 and k % 2 ==0:
-					g.write("%f %f %f %f\n" % (i - (nGrid / 2), j - (nGrid / 2), k - (nGrid / 2), potentialValue))
+				g.write("%f %f %f %f\n" % (i - (nGrid / 2), j - (nGrid / 2), k - (nGrid / 2), potentialValue))
 
 	sliceOutput = open("PotentialResults/potential_slice%d.3D" % timeStep, "w")
 	sliceOutput.write("x y z Potential\n")
 
 	for i in range(0, nGrid):
 		for j in range(0, nGrid):
-			potentialValue = potentialField[i][j][0]
-			if i % 4 == 0 and j % 4 == 0:	
-				sliceOutput.write("%f %f 0 %f\n" % (i - (nGrid / 2), j - (nGrid / 2), potentialValue))
+			potentialValue = potentialField[i][j][0]	
+			sliceOutput.write("%f %f 0 %f\n" % (i - (nGrid / 2), j - (nGrid / 2), potentialValue))
 
-
-	for particle in particleList:
-		sliceOutput.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], -0.1))
+	#for particle in particleList:
+	#	sliceOutput.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], -0.1))
 
 	g.write("%f %f %f %f\n%f %f %f %f\n" % (nGrid / 2, nGrid / 2, nGrid / 2, 0., - nGrid / 2, - nGrid / 2, - nGrid / 2, 0.))
 	g.close()

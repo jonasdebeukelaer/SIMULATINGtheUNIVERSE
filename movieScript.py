@@ -2,6 +2,7 @@ def fly():
     # Do a pseudocolor plot of u.
     #DeleteAllPlots()
     #AddPlot('Pseudocolor', 'temp')
+
     #AddOperator("Clip")
     c = ClipAttributes()
     c.funcType = c.Sphere  # Plane, Sphere
@@ -46,11 +47,11 @@ def fly():
     
     # Create a tuple of camera values and x values. The x values are weights
     # that help to determine where in [0,1] the control points occur.
-    cpts = (c0, c1, c2, c3)
+    cpts = (c0, c1, c2, c3, c4, c5)
     x=[]
     for i in range(4):
         x = x + [float(i) / float(3.)]
-    
+
     # Animate the camera. Note that we use the new built-in EvalCubicSpline
     # function which takes a t value from [0,1] a tuple of t values and a tuple
     # of control points. In this case, the control points are View3DAttributes
@@ -59,7 +60,7 @@ def fly():
     
     s = SaveWindowAttributes()
     s.format = s.PNG
-    s.fileName = "rotating_zooming_output"
+    s.fileName = "movie"
     s.width, s.height = 1024,768
     s.screenCapture = 0
     SetSaveWindowAttributes(s)
