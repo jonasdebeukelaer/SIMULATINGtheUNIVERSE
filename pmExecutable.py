@@ -21,10 +21,10 @@ print "Done\n"
 #------------INITIALISATION PARAMETERS-----------#
 
 nGrid                  = 32
-lBox 				   = 32
+lBox 				   = 100
 ns                     = 1
 
-numParticles           = 'grafic'
+numParticles           = 0
 positionDistribution   = pmClass.PositionDist.zeldovich
 velocityDistribution   = pmClass.VelocityDist.zeldovich
 
@@ -33,11 +33,11 @@ preComputeGreens       = True
 maxVelocity            = 1
 hasCenterParticle      = False
 
-startingA              = 0.267
-maxA                   = 1.000
+startingA              = 0.100
+maxA                   = 0.110
 stepSize               = 0.001
 
-shootEvery             = 1
+shootEvery             = 2000
 outputAsSphere         = False
 
 outputPowerSpectrum    = False
