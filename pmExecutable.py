@@ -20,10 +20,11 @@ print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-nGrid                  = 30
-lBox 				   = 200
+nGrid                  = 32
+lBox 				   = 32
+ns                     = 1
 
-numParticles           = 0
+numParticles           = 'grafic'
 positionDistribution   = pmClass.PositionDist.zeldovich
 velocityDistribution   = pmClass.VelocityDist.zeldovich
 
@@ -32,35 +33,47 @@ preComputeGreens       = True
 maxVelocity            = 1
 hasCenterParticle      = False
 
-startingA              = 0.100
+startingA              = 0.267
 maxA                   = 1.000
 stepSize               = 0.001
 
-shootEvery             = 300
+shootEvery             = 1
 outputAsSphere         = False
 
-outputPowerSpectrum    = True
+outputPowerSpectrum    = False
 outputPowerHeatMap     = False
 
 #----------------DEBUG PARAMETERS----------------#
 
 outputPotentialFieldXY = False
 outputSystemEnergy     = False
-outputDensityField     = True
+outputDensityField     = False
 
 #------------------------------------------------#
 
 #------------INITIALISATION FUNCTIONS------------#
 
-print "Initialising particles..."
-particleList = initialisation.InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA, stepSize, lBox)
-if positionDistribution == pmClass.PositionDist.zeldovich:
-	numParticles = len(particleList)
+particleList = []
+if numParticles == 'grafic':
+	graficConditions = open('p3m_32.dat', 'r')
 
-#particleList = []
-#particleList.append(pmClass.Particle([-1.3, 0.2, 0], [0, 0, 0], 1))
-#particleList.append(pmClass.Particle([0.4, -0.8, 0], [0, 0, 0], 1))
-#numParticles = 2
+	params     = graficConditions.readline()
+	paramsList = params.split()
+	startingA  = float("{0:.3f}".format(float(paramsList[6])))
+	factor     = startingA - (stepSize / 2)
+
+	for pV in graficConditions:
+		values = pV.split()
+		particle = pmClass.Particle([float(values[0]) - 16., float(values[1]) - 16., float(values[2]) - 16.], [float(values[3]) * factor, float(values[4]) * factor, float(values[5]) * factor], 1)
+		particleList.append(particle)
+else:
+	print "Initialising particles..."
+	particleList = initialisation.InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA, stepSize, lBox, ns)
+
+if positionDistribution == pmClass.PositionDist.zeldovich or numParticles == 'grafic':
+	numParticles = len(particleList)
+	if numParticles != 32768:
+		sys.exit("Not retrieving the correct number of particles from grafic")
 
 if hasCenterParticle:
 	centerParticle = pmClass.Particle([0., 24.64, 0.], [0., -1., 0.,], 20)
@@ -105,13 +118,6 @@ for particle in particleList:
 initial.write("%f %f %f %f\n%f %f %f %f\n" % (nGrid / 2, nGrid / 2, nGrid / 2, 0., - nGrid / 2, - nGrid / 2, - nGrid / 2, 0.))
 initial.close()
 
-<<<<<<< HEAD
-=======
-energyFile = open("energyResults.txt", "w")
-energyFile.write("a\tTotal\tpotential\tkinetic\t%% kinetic off\t%% error in energy\n")
-startE = 0
-
->>>>>>> 4f8ce706da896c7f47fd4edbf1cbf77b9e9f5f9b
 print "Iterating..."
 a = startingA
 iterationStart = time.time()
