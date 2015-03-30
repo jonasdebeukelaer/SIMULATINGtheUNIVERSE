@@ -20,10 +20,11 @@ print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-nGrid                  = 10
-lBox 				   = 200
+nGrid                  = 32
+lBox 				   = 32
+ns                     = 1
 
-numParticles           = 0
+numParticles           = 'grafic'
 positionDistribution   = pmClass.PositionDist.zeldovich
 velocityDistribution   = pmClass.VelocityDist.zeldovich
 
@@ -40,7 +41,7 @@ stepSize               = 0.001
 shootEvery             = 20
 outputAsSphere         = False
 
-outputPowerSpectrum    = True
+outputPowerSpectrum    = False
 outputPowerHeatMap     = False
 
 #----------------DEBUG PARAMETERS----------------#
@@ -53,17 +54,27 @@ outputDensityField     = False
 
 #------------INITIALISATION FUNCTIONS------------#
 
-if usePPmethod: preComputeGreens = False
+particleList = []
+if numParticles == 'grafic':
+	graficConditions = open('p3m_32.dat', 'r')
 
-print "Initialising particles..."
-particleList = initialisation.InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA, stepSize, lBox)
-if positionDistribution == pmClass.PositionDist.zeldovich:
+	params     = graficConditions.readline()
+	paramsList = params.split()
+	startingA  = float("{0:.3f}".format(float(paramsList[6])))
+	factor     = startingA - (stepSize / 2)
+
+	for pV in graficConditions:
+		values = pV.split()
+		particle = pmClass.Particle([float(values[0]) - 16., float(values[1]) - 16., float(values[2]) - 16.], [float(values[3]) * factor, float(values[4]) * factor, float(values[5]) * factor], 1)
+		particleList.append(particle)
+else:
+	print "Initialising particles..."
+	particleList = initialisation.InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA, stepSize, lBox, ns)
+
+if positionDistribution == pmClass.PositionDist.zeldovich or numParticles == 'grafic':
 	numParticles = len(particleList)
-
-#particleList = []
-#particleList.append(pmClass.Particle([0., 0., 0], [0, 0, 0]))
-#particleList.append(pmClass.Particle([0.5, 0., 0], [0., 0, 0]))
-#numParticles = 2
+	if numParticles != 32768:
+		sys.exit("Not retrieving the correct number of particles from grafic")
 
 if hasCenterParticle:
 	centerParticle = pmClass.Particle([0., 24.64, 0.], [0., -1., 0.,])
