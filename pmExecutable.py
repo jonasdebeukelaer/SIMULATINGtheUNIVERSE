@@ -20,23 +20,24 @@ print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-nGrid                  = 30
+nGrid                  = 10
 lBox 				   = 200
 
 numParticles           = 0
 positionDistribution   = pmClass.PositionDist.zeldovich
 velocityDistribution   = pmClass.VelocityDist.zeldovich
 
+usePPmethod            = False
 preComputeGreens       = True
 
 maxVelocity            = 1
 hasCenterParticle      = False
 
 startingA              = 0.100
-maxA                   = 0.100
+maxA                   = 1.000
 stepSize               = 0.001
 
-shootEvery             = 300
+shootEvery             = 20
 outputAsSphere         = False
 
 outputPowerSpectrum    = True
@@ -46,11 +47,13 @@ outputPowerHeatMap     = False
 
 outputPotentialFieldXY = False
 outputSystemEnergy     = False
-outputDensityField     = True
+outputDensityField     = False
 
 #------------------------------------------------#
 
 #------------INITIALISATION FUNCTIONS------------#
+
+if usePPmethod: preComputeGreens = False
 
 print "Initialising particles..."
 particleList = initialisation.InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA, stepSize, lBox)
@@ -58,12 +61,12 @@ if positionDistribution == pmClass.PositionDist.zeldovich:
 	numParticles = len(particleList)
 
 #particleList = []
-#particleList.append(pmClass.Particle([-1.3, 0.2, 0], [0, 0, 0], 1))
-#particleList.append(pmClass.Particle([0.4, -0.8, 0], [0, 0, 0], 1))
+#particleList.append(pmClass.Particle([0., 0., 0], [0, 0, 0]))
+#particleList.append(pmClass.Particle([0.5, 0., 0], [0., 0, 0]))
 #numParticles = 2
 
 if hasCenterParticle:
-	centerParticle = pmClass.Particle([0., 24.64, 0.], [0., -1., 0.,], 20)
+	centerParticle = pmClass.Particle([0., 24.64, 0.], [0., -1., 0.,])
 	particleList.append(centerParticle)
 	numParticles += 1
 print"\nDone\n"
@@ -105,13 +108,6 @@ for particle in particleList:
 initial.write("%f %f %f %f\n%f %f %f %f\n" % (nGrid / 2, nGrid / 2, nGrid / 2, 0., - nGrid / 2, - nGrid / 2, - nGrid / 2, 0.))
 initial.close()
 
-<<<<<<< HEAD
-=======
-energyFile = open("energyResults.txt", "w")
-energyFile.write("a\tTotal\tpotential\tkinetic\t%% kinetic off\t%% error in energy\n")
-startE = 0
-
->>>>>>> 4f8ce706da896c7f47fd4edbf1cbf77b9e9f5f9b
 print "Iterating..."
 a = startingA
 iterationStart = time.time()
@@ -130,7 +126,6 @@ if outputPowerSpectrum:
 		aArray = [a]
 
 while frameNo < maxFrameNo:
-
 	shoot = True if (frameNo % shootEvery) == 0 else False
 	if shoot:
 		f = open("Results/values_frame%d.3D" % (frameNo), "w")
@@ -140,7 +135,8 @@ while frameNo < maxFrameNo:
 			sphereF.write("x y z LocalDensity\n")
 
 	densityField   = core.CalculateDensityField(nGrid, particleList)
-	potentialField = core.SolvePotential(densityField, a, greensFunction, preComputeGreens)
+	if not usePPmethod:
+		potentialField = core.SolvePotential(densityField, a, greensFunction, preComputeGreens)
 
 	accumulatedEnergy = 0
 	if frameNo == maxFrameNo/2:
@@ -148,11 +144,17 @@ while frameNo < maxFrameNo:
 
 	for i, particle in enumerate(particleList):
 
-		particle.acceleration      = core.CalculateParticleAcceleration(particle, potentialField)
+		if not usePPmethod:
+			particle.acceleration  = core.CalculateParticleAcceleration(particle, potentialField)
+		else:
+			core.CalculateParticleAccelerationPP(particle, i, particleList, numParticles)    
 		particle.halfStepMomentum += np.multiply(core.GetF(a - stepSize) * stepSize, particle.acceleration)
 		localDensity               = core.FindLocalDensity(particle, densityField)
 		particle.position         += np.multiply((a - (stepSize / 2))**(-2) * core.GetF(a - (stepSize / 2)) * stepSize, particle.halfStepMomentum)
 		core.PositionCorrect(particle, nGrid)
+
+		if usePPmethod:
+			particle.accumulatedForce = [0.0, 0.0, 0.0]
 
 		if shoot:
 			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], math.log(localDensity)))

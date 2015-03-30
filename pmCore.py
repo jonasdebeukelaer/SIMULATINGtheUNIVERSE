@@ -122,11 +122,26 @@ def CalculateParticleAcceleration(particle, potentialField):
 	yNeighbours = FindPlusMinus(yMesh, meshShape[1])
 	zNeighbours = FindPlusMinus(zMesh, meshShape[2])
 
-	xAcceleration = - (potentialField[xNeighbours[0]][yMesh][zMesh] - potentialField[xNeighbours[1]][yMesh][zMesh]) / (2.0 * particle.mass)
-	yAcceleration = - (potentialField[xMesh][yNeighbours[0]][zMesh] - potentialField[xMesh][yNeighbours[1]][zMesh]) / (2.0 * particle.mass)
-	zAcceleration = - (potentialField[xMesh][yMesh][zNeighbours[0]] - potentialField[xMesh][yMesh][zNeighbours[1]]) / (2.0 * particle.mass)
+	xAcceleration = - (potentialField[xNeighbours[0]][yMesh][zMesh] - potentialField[xNeighbours[1]][yMesh][zMesh]) / 2.0
+	yAcceleration = - (potentialField[xMesh][yNeighbours[0]][zMesh] - potentialField[xMesh][yNeighbours[1]][zMesh]) / 2.0
+	zAcceleration = - (potentialField[xMesh][yMesh][zNeighbours[0]] - potentialField[xMesh][yMesh][zNeighbours[1]]) / 2.0
 
 	return (xAcceleration, yAcceleration, zAcceleration)
+
+def CalculateParticleAccelerationPP(particle, i, particleList, numParticles):
+	for otherIndex in range(i+1, numParticles):
+		otherParticle = particleList[otherIndex]
+		force = CalcForce(particle.position, otherParticle.position)
+		particle.acceleration += force
+		otherParticle.acceleration -= force
+
+def CalcForce(pos1, pos2):
+	epsilon = 1
+	separation = np.subtract(pos2, pos1)
+	separationMagnitudeSquared = sum(separation**2) + epsilon**2
+	force = 1 / separationMagnitudeSquared**(1.5)
+	force = np.multiply(separation, force)
+	return force
 
 def GetF(a, omega_m = 1, omega_k = 0, omega_lambda = 0):
 	return (a**(-1)*(omega_m + omega_k * a + omega_lambda * a**3))**(-0.5)
@@ -160,7 +175,13 @@ def CalculatePowerSpectrum(densityField, nGrid, lBox):
 	kShape = centeredDensityFourier.shape
 	kRadii = [kShape[0]/2, kShape[1]/2, kShape[2]]
 	numGridBoxes = kShape[0] * kShape[1] * kShape[2]
-	#centeredDensityFourier = centeredDensityFourier / nGrid**3
+
+	print 'these should be different ', densityFourier[0][kRadii[1]+2][0], centeredDensityFourier[0][kRadii[1]+2][0]
+	print 'these could be the same  ', densityFourier[0][kRadii[1]+2][0], centeredDensityFourier[0][0][0]
+	print 'these could be the same  ', densityFourier[0][kRadii[1]+2][0], centeredDensityFourier[0][1][0]
+	print 'these could be the same  ', densityFourier[0][kRadii[1]+2][0], centeredDensityFourier[0][2][0]
+	print 'these could be the same  ', densityFourier[0][kRadii[1]+2][0], centeredDensityFourier[0][3][0]
+	print 'these could be the same  ', densityFourier[0][kRadii[1]+2][0], centeredDensityFourier[0][4][0]
 
 	distancesfromOrigin = list()
 

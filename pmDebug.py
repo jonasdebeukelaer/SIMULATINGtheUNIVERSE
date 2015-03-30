@@ -39,11 +39,11 @@ def OutputTotalEnergy(particleList, potentialField, a, stepSize, nGrid):
 		yIndex = core.FindMeshIndex(particle.position[1], nGrid)
 		zIndex = core.FindMeshIndex(particle.position[2], nGrid)
 
-		potential += potentialField[xIndex][yIndex][zIndex] * particle.mass
+		potential += potentialField[xIndex][yIndex][zIndex]
 
 	potentialE  = 0.5 * potential * a
 
-	totalMoms = [(part.halfStepMomentum[0]**2 + part.halfStepMomentum[1]**2 + part.halfStepMomentum[2]**2) / part.mass for part in particleList]
+	totalMoms = [(part.halfStepMomentum[0]**2 + part.halfStepMomentum[1]**2 + part.halfStepMomentum[2]**2) for part in particleList]
 	kinetic = sum(np.multiply(0.5, totalMoms))
 
 	return [potentialE + kinetic, potentialE, kinetic]

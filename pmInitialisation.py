@@ -32,10 +32,10 @@ def ComputeDisplacementVectors(nGrid, lBox, a):
 				kz = 2 * math.pi * n / nGrid
 				displacementsCalculated += 1
 
-				kSquare = float(kx**2 + ky**2 + kz**2) #* (2 * math.pi / Lbox)**2
+				kSquare = float(kx**2 + ky**2 + kz**2)
 				k       = math.sqrt(kSquare)
 				if kSquare != 0:
-					powerValue = 10**(-4.5) * ((k * nGrid) / (lBox * 0.05))
+					powerValue = 2 * math.pi**2 * 10**(-4.5) * (k * nGrid / (lBox * 0.05))
 					ak         = math.sqrt(powerValue) * random.gauss(0., 1.) / (k * nGrid / lBox)**2
 					bk         = math.sqrt(powerValue) * random.gauss(0., 1.) / (k * nGrid / lBox)**2
 				else:
@@ -48,45 +48,6 @@ def ComputeDisplacementVectors(nGrid, lBox, a):
 				zDisplacementFourier[l][m][n] = ck * kz
 
 				helpers.OutputPercentage(displacementsCalculated, nGrid**2 * ((nGrid / 2) + 1), time.time() - displacementStart)
-
-	xDisplacementReal = np.fft.irfftn(xDisplacementFourier) * nGrid**3
-	yDisplacementReal = np.fft.irfftn(yDisplacementFourier) * nGrid**3
-	zDisplacementReal = np.fft.irfftn(zDisplacementFourier) * nGrid**3
-
-	return (xDisplacementReal, yDisplacementReal, zDisplacementReal)
-
-def ComputeDisplacementAlternative(nGrid, lBox, a):
-	xDisplacementFourier = np.zeros([nGrid, nGrid, (nGrid / 2) + 1], dtype = 'complex128')
-	yDisplacementFourier = np.zeros([nGrid, nGrid, (nGrid / 2) + 1], dtype = 'complex128')
-	zDisplacementFourier = np.zeros([nGrid, nGrid, (nGrid / 2) + 1], dtype = 'complex128')
-
-	dk = 2 * math.pi / lBox
-
-	for nx in range(0, nGrid):
-		kx = 2 * math.pi * nx / nGrid
-		for ny in range(0, nGrid):
-			ky = 2 * math.pi * ny / nGrid
-			for nz in range(0, (nGrid / 2) + 1):
-				kz = 2 * math.pi * nz / nGrid
-
-				k          = math.sqrt((nx**2 + ny**2 + nz**2) * dk**2)
-				powerValue = (2 * math.pi**2) * k * (1. / 70.)**4 * (10**7)**2 * a**2
-
-				Ax = float(math.sqrt(-math.log(1. - random.random()) * powerValue))
-				Ay = float(math.sqrt(-math.log(1. - random.random()) * powerValue))
-				Az = float(math.sqrt(-math.log(1. - random.random()) * powerValue))
-
-				thetaX = float(random.uniform(0. , 2 * math.pi))
-				thetaY = float(random.uniform(0. , 2 * math.pi))
-				thetaZ = float(random.uniform(0. , 2 * math.pi))
-
-				deltaKx = Ax * cmath.exp(thetaX * 1j)
-				deltaKy = Ay * cmath.exp(thetaY * 1j)
-				deltaKz = Az * cmath.exp(thetaZ * 1j)
-
-				xDisplacementFourier[nx][ny][nz] = deltaKx
-				yDisplacementFourier[nx][ny][nz] = deltaKy
-				zDisplacementFourier[nx][ny][nz] = deltaKz
 
 	xDisplacementReal = np.fft.irfftn(xDisplacementFourier) * nGrid**3
 	yDisplacementReal = np.fft.irfftn(yDisplacementFourier) * nGrid**3
@@ -126,7 +87,7 @@ def InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistr
 					yMomentum = - (a - (deltaA / 2))**2 * (yDisplacements[i][j][k])
 					zMomentum = - (a - (deltaA / 2))**2 * (zDisplacements[i][j][k])
 
-					newParticle = pmClass.Particle([x, y, z], [xMomentum, yMomentum, zMomentum], 1)
+					newParticle = pmClass.Particle([x, y, z], [xMomentum, yMomentum, zMomentum])
 					core.PositionCorrect(newParticle, nGrid)
 					particleList.append(newParticle)
 					helpers.OutputPercentage(particlesCreated, nGrid**3, time.time() - creationStart)
@@ -158,13 +119,13 @@ def InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistr
 					yMomentum = 0
 					zMomentum = 0
 
-					newParticle = pmClass.Particle([x, y, z], [xMomentum, yMomentum, zMomentum], 1)
+					newParticle = pmClass.Particle([x, y, z], [xMomentum, yMomentum, zMomentum])
 					core.PositionCorrect(newParticle, nGrid)
 					particleList.append(newParticle)
 
 	else:
 		for i in range(0, numParticles):
-			newParticle = pmClass.Particle([0., 0., 0.], [0., 0., 0.], 1)
+			newParticle = pmClass.Particle([0., 0., 0.], [0., 0., 0.])
 			particleList.append(newParticle)
 
 		# Random coordinates distribution

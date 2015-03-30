@@ -1,10 +1,9 @@
 from enum import Enum
 
 class Particle:
-	def __init__(self, position, halfStepMomentum, mass):
+	def __init__(self, position, halfStepMomentum):
 		self.position         = position
 		self.halfStepMomentum = halfStepMomentum
-		self.mass             = mass
 		self.acceleration     = [0.0, 0.0, 0.0]
 
 class PositionDist(Enum):
