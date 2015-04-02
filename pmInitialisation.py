@@ -14,7 +14,7 @@ def ComputeDisplacementVectors(nGrid, lBox, ns):
 	yDisplacementFourier = np.zeros([nGrid, nGrid, (nGrid / 2) + 1], dtype = 'complex128')
 	zDisplacementFourier = np.zeros([nGrid, nGrid, (nGrid / 2) + 1], dtype = 'complex128')
 
-	print 'Calculating displacements...'
+	#print 'Calculating displacements...'
 	displacementStart = time.time()
 	displacementsCalculated = 0
 	for l in range(0, nGrid):
@@ -48,7 +48,7 @@ def ComputeDisplacementVectors(nGrid, lBox, ns):
 				yDisplacementFourier[l][m][n] = ck * ky
 				zDisplacementFourier[l][m][n] = ck * kz
 
-				helpers.OutputPercentage(displacementsCalculated, nGrid**2 * ((nGrid / 2) + 1), time.time() - displacementStart)
+				#helpers.OutputPercentage(displacementsCalculated, nGrid**2 * ((nGrid / 2) + 1), time.time() - displacementStart)
 
 	xDisplacementReal = np.fft.irfftn(xDisplacementFourier) * nGrid**3
 	yDisplacementReal = np.fft.irfftn(yDisplacementFourier) * nGrid**3
@@ -66,7 +66,7 @@ def InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistr
 		yDisplacements = (displacementVectors[1])
 		zDisplacements = (displacementVectors[2])
 
-		print '\nCreating particles...'
+		#print '\nCreating particles...'
 		creationStart = time.time()
 		particlesCreated = 0
 		gridX = - nGrid / 2
@@ -88,10 +88,10 @@ def InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistr
 					yMomentum = - (yDisplacements[i][j][k]) * (a - (deltaA / 2))**2
 					zMomentum = - (zDisplacements[i][j][k]) * (a - (deltaA / 2))**2
 
-					newParticle = pmClass.Particle([x, y, z], [xMomentum, yMomentum, zMomentum], 1)
+					newParticle = pmClass.Particle([x, y, z], [xMomentum, yMomentum, zMomentum])
 					core.PositionCorrect(newParticle, nGrid)
 					particleList.append(newParticle)
-					helpers.OutputPercentage(particlesCreated, nGrid**3, time.time() - creationStart)
+					#helpers.OutputPercentage(particlesCreated, nGrid**3, time.time() - creationStart)
 
 	elif positionDistribution == pmClass.PositionDist.sineWave1D:
 		wavelength = nGrid
@@ -120,13 +120,13 @@ def InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistr
 					yMomentum = 0
 					zMomentum = 0
 
-					newParticle = pmClass.Particle([x, y, z], [xMomentum, yMomentum, zMomentum], 1)
+					newParticle = pmClass.Particle([x, y, z], [xMomentum, yMomentum, zMomentum])
 					core.PositionCorrect(newParticle, nGrid)
 					particleList.append(newParticle)
 
 	else:
 		for i in range(0, numParticles):
-			newParticle = pmClass.Particle([0., 0., 0.], [0., 0., 0.], 1)
+			newParticle = pmClass.Particle([0., 0., 0.], [0., 0., 0.])
 			particleList.append(newParticle)
 
 		# Random coordinates distribution

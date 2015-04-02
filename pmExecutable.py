@@ -14,13 +14,13 @@ import pyfftw
 import glob
 from pync import Notifier
 
-print "Seeding..."
+#print "Seeding..."
 random.seed(30091874)
-print "Done\n"
+#print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-nGrid                  = 32
+nGrid                  = int(sys.argv[1])
 lBox 				   = 100
 ns                     = 1
 
@@ -28,14 +28,15 @@ numParticles           = 0
 positionDistribution   = pmClass.PositionDist.zeldovich
 velocityDistribution   = pmClass.VelocityDist.zeldovich
 
+usePPmethod            = sys.argv[2]
 preComputeGreens       = True
 
 maxVelocity            = 1
 hasCenterParticle      = False
 
-startingA              = 0.100
-maxA                   = 0.110
-stepSize               = 0.001
+startingA              = 0.1000
+maxA                   = 0.1010
+stepSize               = 0.0010
 
 shootEvery             = 2000
 outputAsSphere         = False
@@ -67,34 +68,32 @@ if numParticles == 'grafic':
 		particle = pmClass.Particle([float(values[0]) - 16., float(values[1]) - 16., float(values[2]) - 16.], [float(values[3]) * factor, float(values[4]) * factor, float(values[5]) * factor], 1)
 		particleList.append(particle)
 else:
-	print "Initialising particles..."
+	#print "Initialising particles..."
 	particleList = initialisation.InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA, stepSize, lBox, ns)
 
 if positionDistribution == pmClass.PositionDist.zeldovich or numParticles == 'grafic':
 	numParticles = len(particleList)
-	if numParticles != 32768:
-		sys.exit("Not retrieving the correct number of particles from grafic")
 
 if hasCenterParticle:
-	centerParticle = pmClass.Particle([0., 24.64, 0.], [0., -1., 0.,], 20)
+	centerParticle = pmClass.Particle([0., 24.64, 0.], [0., -1., 0.,])
 	particleList.append(centerParticle)
 	numParticles += 1
-print"\nDone\n"
+#print"\nDone\n"
 
-print "Determining mesh shape..."
+#print "Determining mesh shape..."
 densityField = core.CalculateDensityField(nGrid, particleList)
-print "Done\n"
+#print "Done\n"
 
 if preComputeGreens:
-	print "Calculating Green's function..."
+	#print "Calculating Green's function..."
 	greensFunction = core.CreateGreensFunction(nGrid)
-	print "Done\n"
+	#print "Done\n"
 else:
 	greensFunction = 0
 
 if os.path.exists("Results/values_frame0.3D"):
-	Notifier.notify('You should probably make them not exist...', title = 'Results still exist')
-	deleteFiles = raw_input("Would you like to delete yo motherflippin results from the last test, you       simpleton? (y/n): ")
+	#Notifier.notify('You should probably make them not exist...', title = 'Results still exist')
+	deleteFiles = 'y' #raw_input("Would you like to delete yo motherflippin results from the last test, you       simpleton? (y/n): ")
 	if deleteFiles == 'y':
 		fileList          = glob.glob("Results/*.3D")
 		potentialFileList = glob.glob("PotentialResults/*.3D")
@@ -118,11 +117,11 @@ for particle in particleList:
 initial.write("%f %f %f %f\n%f %f %f %f\n" % (nGrid / 2, nGrid / 2, nGrid / 2, 0., - nGrid / 2, - nGrid / 2, - nGrid / 2, 0.))
 initial.close()
 
-print "Iterating..."
+#print "Iterating..."
 a = startingA
 iterationStart = time.time()
 frameNo = 1
-maxFrameNo = int((maxA - startingA) / stepSize) + 1
+maxFrameNo = int(round((maxA - startingA) / stepSize)) + 1
 
 if outputSystemEnergy:
 	energyFile = open("energyResults.txt", "w")
@@ -136,7 +135,6 @@ if outputPowerSpectrum:
 		aArray = [a]
 
 while frameNo < maxFrameNo:
-
 	shoot = True if (frameNo % shootEvery) == 0 else False
 	if shoot:
 		f = open("Results/values_frame%d.3D" % (frameNo), "w")
@@ -146,19 +144,24 @@ while frameNo < maxFrameNo:
 			sphereF.write("x y z LocalDensity\n")
 
 	densityField   = core.CalculateDensityField(nGrid, particleList)
-	potentialField = core.SolvePotential(densityField, a, greensFunction, preComputeGreens)
+	if usePPmethod == 'False':
+		potentialField = core.SolvePotential(densityField, a, greensFunction, preComputeGreens)
 
 	accumulatedEnergy = 0
-	if frameNo == maxFrameNo/2:
-		middlePowerSpectrum = core.CalculatePowerSpectrum(densityField, nGrid, lBox)
 
 	for i, particle in enumerate(particleList):
 
-		particle.acceleration      = core.CalculateParticleAcceleration(particle, potentialField)
+		if usePPmethod == 'False':
+			particle.acceleration  = core.CalculateParticleAcceleration(particle, potentialField)
+		else:
+			core.CalculateParticleAccelerationPP(particle, i, particleList, numParticles)    
 		particle.halfStepMomentum += np.multiply(core.GetF(a - stepSize) * stepSize, particle.acceleration)
-		localDensity               = core.FindLocalDensity(particle, densityField)
 		particle.position         += np.multiply((a - (stepSize / 2))**(-2) * core.GetF(a - (stepSize / 2)) * stepSize, particle.halfStepMomentum)
 		core.PositionCorrect(particle, nGrid)
+		localDensity               = core.FindLocalDensity(particle, densityField)
+
+		if usePPmethod == 'False':
+			particle.accumulatedForce = [0.0, 0.0, 0.0]
 
 		if shoot:
 			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], math.log(localDensity)))
@@ -192,7 +195,7 @@ while frameNo < maxFrameNo:
 		f.write("%f %f %f %f\n%f %f %f %f\n" % (nGrid / 2, nGrid / 2, nGrid / 2, 0., - nGrid / 2, - nGrid / 2, - nGrid / 2, 0.))
 		f.close()
 
-	helpers.OutputPercentage(frameNo, (maxA - startingA) / stepSize, time.time() - iterationStart)
+	#helpers.OutputPercentage(frameNo, (maxA - startingA) / stepSize, time.time() - iterationStart)
 
 	a       += stepSize
 	frameNo += 1
@@ -209,5 +212,5 @@ if outputPowerSpectrum:
 
 #------------------------------------------------#
 
-print '\n', time.time() - iterationStart
-Notifier.notify('The universe has been solved', title = 'Thanks to the finest minds of the 21st century...')
+print nGrid, usePPmethod, time.time() - iterationStart
+#Notifier.notify('The universe has been solved', title = 'Thanks to the finest minds of the 21st century...')
