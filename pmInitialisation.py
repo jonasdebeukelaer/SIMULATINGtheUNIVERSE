@@ -8,7 +8,7 @@ import cmath
 import random
 import time
 
-def ComputeDisplacementVectors(nGrid, lBox, a):
+def ComputeDisplacementVectors(nGrid, lBox, a, ns):
 	xDisplacementFourier = np.zeros([nGrid, nGrid, (nGrid / 2) + 1], dtype = 'complex128')
 	yDisplacementFourier = np.zeros([nGrid, nGrid, (nGrid / 2) + 1], dtype = 'complex128')
 	zDisplacementFourier = np.zeros([nGrid, nGrid, (nGrid / 2) + 1], dtype = 'complex128')
@@ -35,7 +35,7 @@ def ComputeDisplacementVectors(nGrid, lBox, a):
 				kSquare = float(kx**2 + ky**2 + kz**2)
 				k       = math.sqrt(kSquare)
 				if kSquare != 0:
-					powerValue = 2 * math.pi**2 * 10**(-4.5) * (k * nGrid / (lBox * 0.05))
+					powerValue = 2 * math.pi**2 * 10**(-4.5) * (k * nGrid / (lBox * 0.05))**ns
 					ak         = math.sqrt(powerValue) * random.gauss(0., 1.) / (k * nGrid / lBox)**2
 					bk         = math.sqrt(powerValue) * random.gauss(0., 1.) / (k * nGrid / lBox)**2
 				else:
@@ -55,12 +55,12 @@ def ComputeDisplacementVectors(nGrid, lBox, a):
 
 	return (xDisplacementReal, yDisplacementReal, zDisplacementReal)
 
-def InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistribution, maxVelocity, a, deltaA, lBox):
+def InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistribution, maxVelocity, a, deltaA, lBox, ns):
 	particleList = []
 
 	if positionDistribution == pmClass.PositionDist.zeldovich:
 
-		displacementVectors = ComputeDisplacementVectors(nGrid, lBox, a)
+		displacementVectors = ComputeDisplacementVectors(nGrid, lBox, a, ns)
 		xDisplacements = (displacementVectors[0])
 		yDisplacements = (displacementVectors[1])
 		zDisplacements = (displacementVectors[2])

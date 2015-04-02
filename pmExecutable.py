@@ -20,11 +20,11 @@ print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-nGrid                  = 32
-lBox 				   = 32
+nGrid                  = 10
+lBox 				   = 50
 ns                     = 1
 
-numParticles           = 'grafic'
+numParticles           = 0
 positionDistribution   = pmClass.PositionDist.zeldovich
 velocityDistribution   = pmClass.VelocityDist.zeldovich
 
@@ -41,8 +41,7 @@ stepSize               = 0.001
 shootEvery             = 20
 outputAsSphere         = False
 
-outputPowerSpectrum    = False
-outputPowerHeatMap     = False
+outputPowerSpectrum    = True
 
 #----------------DEBUG PARAMETERS----------------#
 
@@ -73,8 +72,6 @@ else:
 
 if positionDistribution == pmClass.PositionDist.zeldovich or numParticles == 'grafic':
 	numParticles = len(particleList)
-	if numParticles != 32768:
-		sys.exit("Not retrieving the correct number of particles from grafic")
 
 if hasCenterParticle:
 	centerParticle = pmClass.Particle([0., 24.64, 0.], [0., -1., 0.,])
@@ -132,9 +129,6 @@ if outputSystemEnergy:
 
 if outputPowerSpectrum:
 	initialPowerSpectrum = core.CalculatePowerSpectrum(densityField, nGrid, lBox)
-	if outputPowerHeatMap:
-		powerSpectrumHeatMap = [initialPowerSpectrum]
-		aArray = [a]
 
 while frameNo < maxFrameNo:
 	shoot = True if (frameNo % shootEvery) == 0 else False
@@ -191,11 +185,6 @@ while frameNo < maxFrameNo:
 		if outputPotentialFieldXY:
 			debug.OutputPotentialFieldXY(potentialField, particleList, nGrid, frameNo)
 
-		if outputPowerSpectrum and outputPowerHeatMap:
-			powerSpectrum = core.CalculatePowerSpectrum(densityField, nGrid, lBox)
-			powerSpectrumHeatMap.append(powerSpectrum)
-			aArray.append(a)
-
 		f.write("%f %f %f %f\n%f %f %f %f\n" % (nGrid / 2, nGrid / 2, nGrid / 2, 0., - nGrid / 2, - nGrid / 2, - nGrid / 2, 0.))
 		f.close()
 
@@ -208,13 +197,11 @@ if outputSystemEnergy:
 	print 'startE=', startE, ' endE=', accumulatedEnergy, '\t difference percent=', (accumulatedEnergy-startE)/ startE * 100
 	energyFile.close()
 
-if outputPowerSpectrum:
-	if outputPowerHeatMap:
-		core.OutputPowerSpectrumHeatMap(powerSpectrumHeatMap, aArray, nGrid, lBox)
-	finalPowerSpectrum = core.CalculatePowerSpectrum(densityField, nGrid, lBox)
-	core.OutputPowerSpectrum(initialPowerSpectrum, middlePowerSpectrum, finalPowerSpectrum, startingA, nGrid, lBox)
-
 #------------------------------------------------#
 
 print '\n', time.time() - iterationStart
 Notifier.notify('The universe has been solved', title = 'Thanks to the finest minds of the 21st century...')
+
+if outputPowerSpectrum:
+	finalPowerSpectrum = core.CalculatePowerSpectrum(densityField, nGrid, lBox)
+	core.OutputPowerSpectrum(initialPowerSpectrum, middlePowerSpectrum, finalPowerSpectrum, startingA, nGrid, lBox)

@@ -18,12 +18,7 @@ Potentialresults/
 seeDisplacementDistribution.txt
 greensTest.py
 lena.bmp
-pmClass.pyc
-pmCore.pyc
-pmDebug.pyc
-pmHelpers.pyc
-pmInitialisation.pyc
-pmHelper.py
+*.pyc
 test.py
 grafic/
 grafic-2.101.tar.gz
