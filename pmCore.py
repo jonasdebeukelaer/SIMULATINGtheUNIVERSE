@@ -4,9 +4,6 @@ import numpy as np
 import math
 import sys
 import pyfftw
-
-from operator import itemgetter
-
 import matplotlib.pyplot as plt
 
 def FindMeshIndex(position, nGrid):
@@ -17,6 +14,7 @@ def FindMeshIndex(position, nGrid):
 
 def CalculateDensityField(nGrid, particleList):
 	densityFieldMesh = np.zeros([nGrid, nGrid, nGrid])
+	densityFieldMesh.fill(-1)
 
 	for particle in particleList:
 		xMesh = FindMeshIndex(particle.position[0], nGrid)
@@ -165,7 +163,7 @@ def FindLocalDensity(particle, densityField):
 
 	return densityField[xMesh][yMesh][zMesh]
 
-def CalculatePowerSpectrum(densityField, nGrid, lBox):
+def CalculatePowerSpectrum(densityField, nGrid, lBox, dk):
 	densityFFT = pyfftw.builders.rfftn(densityField, threads = helpers.GetNumberOfThreads())
 	densityFourier = densityFFT()
 	centeredDensityFourier = np.fft.fftshift(densityFourier, axes=(0,1,))
@@ -174,7 +172,10 @@ def CalculatePowerSpectrum(densityField, nGrid, lBox):
 	kRadii = [kShape[0]/2, kShape[1]/2, kShape[2]]
 	numGridBoxes = kShape[0] * kShape[1] * kShape[2]
 
-	distancesfromOrigin = list()
+	numberFourierModes = int((1.0*nGrid/dk))
+	binnedPowerSpectrum = np.zeros(numberFourierModes)
+	numInBin = [0] * numberFourierModes
+	bin = 0
 
 	for i in range(0, kShape[0]):
 		kiSquare = (i-kRadii[0])**2
@@ -183,48 +184,26 @@ def CalculatePowerSpectrum(densityField, nGrid, lBox):
 			for k in range(0, kShape[2]):
 				kkSquare = k**2
 				kr = math.sqrt(kiSquare + kjSquare + kkSquare)
-				physicalK = kr / nGrid * lBox
 				if kr != 0:
-					distancesfromOrigin.append([kr, 2*((centeredDensityFourier[i][j][k].real)**2 + (centeredDensityFourier[i][j][k].imag)**2)])
+					bin = int(kr / dk)
+					numInBin[bin] += 1
+					binnedPowerSpectrum[bin] += 2*((centeredDensityFourier[i][j][k].real)**2 + (centeredDensityFourier[i][j][k].imag)**2)
 
-	print centeredDensityFourier[1][0][0].real**2 + centeredDensityFourier[1][0][0].imag**2 + centeredDensityFourier[0][1][0].real**2 + centeredDensityFourier[0][1][0].imag**2 + centeredDensityFourier[0][0][1].real**2 + centeredDensityFourier[0][0][1].imag**2
+	for i in range(1, numberFourierModes):
+		if numInBin[i] != 0:
+			binnedPowerSpectrum[i] /= numInBin[i]
 
+	print binnedPowerSpectrum
 
-	distancesfromOrigin = sorted(distancesfromOrigin, key=itemgetter(0))
+	xScale = [((float(i) + 0.5)*dk/nGrid) for i in range(1, len(binnedPowerSpectrum)+1)]
 
-	dk = 1
-	numberFourierModes = int((1.0*nGrid/dk))
-	binnedPowerSpectrum = np.zeros(numberFourierModes)
-	bin = 0
-	topK = 0
-	NumInBin = 0
+	plt.plot(np.array(xScale), np.array(binnedPowerSpectrum))
+	plt.show()
 
-	for i in distancesfromOrigin:
-		kr = i[0]
-		kAmplitude = i[1]
-		if kr > topK:
-			if binnedPowerSpectrum[bin] != 0:
-				binnedPowerSpectrum[bin] = float(binnedPowerSpectrum[bin]) / NumInBin
-				print kr, binnedPowerSpectrum[bin]
-			topK += dk
-			bin += 1
-			NumInBin = 0
-		if bin < numberFourierModes:
-			NumInBin += 1
-			binnedPowerSpectrum[bin] += kAmplitude
-
-	normalisedBinnedPowerSpectrum = binnedPowerSpectrum / max(binnedPowerSpectrum)
-	binnedPowerSpectrum = reversed(binnedPowerSpectrum)
 	return list(binnedPowerSpectrum)
 
-def OutputPowerSpectrumHeatMap(powerSpectrumHeatMap, aArray, nGrid, lBox):
-	numberFourierModes = int(math.sqrt(3)*(nGrid/2+1)+1)
-
-	
-
-def OutputPowerSpectrum(initialPowerSpectrum, middlePowerSpectrum, finalPowerSpectrum, startingA, nGrid, lBox):
-	dk     = 1
-	xScale = [((float(i) - 0.5)*dk/nGrid) for i in range(1, len(finalPowerSpectrum)+1)]
+def OutputPowerSpectrum(initialPowerSpectrum, middlePowerSpectrum, finalPowerSpectrum, startingA, nGrid, lBox, dk):
+	xScale = [((float(i) + 0.5)*dk/nGrid) for i in range(1, len(finalPowerSpectrum)+1)]
 
 	plt.plot(np.array(xScale), np.array(finalPowerSpectrum))
 	plt.plot(np.array(xScale), np.array(initialPowerSpectrum))
