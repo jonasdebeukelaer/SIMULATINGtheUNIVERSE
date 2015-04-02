@@ -7,8 +7,9 @@ import math
 import cmath
 import random
 import time
+import sys
 
-def ComputeDisplacementVectors(nGrid, lBox, a, ns):
+def ComputeDisplacementVectors(nGrid, lBox, ns):
 	xDisplacementFourier = np.zeros([nGrid, nGrid, (nGrid / 2) + 1], dtype = 'complex128')
 	yDisplacementFourier = np.zeros([nGrid, nGrid, (nGrid / 2) + 1], dtype = 'complex128')
 	zDisplacementFourier = np.zeros([nGrid, nGrid, (nGrid / 2) + 1], dtype = 'complex128')
@@ -35,13 +36,13 @@ def ComputeDisplacementVectors(nGrid, lBox, a, ns):
 				kSquare = float(kx**2 + ky**2 + kz**2)
 				k       = math.sqrt(kSquare)
 				if kSquare != 0:
-					powerValue = 2 * math.pi**2 * 10**(-6.4) * (k * nGrid / (lBox * 0.05))**ns
-					ak         = math.sqrt(powerValue) * random.gauss(0., 1.) / (k * nGrid / lBox)**2
-					bk         = math.sqrt(powerValue) * random.gauss(0., 1.) / (k * nGrid / lBox)**2
+					powerValue = 2 * math.pi**2 * 10**(-9) * ((k * nGrid) / (lBox * 0.05))**ns
+					ak         = math.sqrt(powerValue) * random.gauss(0., 1.) / ((k * nGrid / lBox)**2 * math.sqrt(2))
+					bk         = math.sqrt(powerValue) * random.gauss(0., 1.) / ((k * nGrid / lBox)**2 * math.sqrt(2))
 				else:
 					ak = 0
 					bk = 0
-				ck = (ak - bk * 1j) / 2
+				ck = (ak - bk * 1j) # / 2
 
 				xDisplacementFourier[l][m][n] = ck * kx
 				yDisplacementFourier[l][m][n] = ck * ky
@@ -60,7 +61,7 @@ def InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistr
 
 	if positionDistribution == pmClass.PositionDist.zeldovich:
 
-		displacementVectors = ComputeDisplacementVectors(nGrid, lBox, a, ns)
+		displacementVectors = ComputeDisplacementVectors(nGrid, lBox, ns)
 		xDisplacements = (displacementVectors[0])
 		yDisplacements = (displacementVectors[1])
 		zDisplacements = (displacementVectors[2])
@@ -83,9 +84,9 @@ def InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistr
 					y = gridY - a * (yDisplacements[i][j][k])
 					z = gridZ - a * (zDisplacements[i][j][k])
 
-					xMomentum = - (a - (deltaA / 2))**2 * (xDisplacements[i][j][k])
-					yMomentum = - (a - (deltaA / 2))**2 * (yDisplacements[i][j][k])
-					zMomentum = - (a - (deltaA / 2))**2 * (zDisplacements[i][j][k])
+					xMomentum = - (xDisplacements[i][j][k]) * (a - (deltaA / 2))**2
+					yMomentum = - (yDisplacements[i][j][k]) * (a - (deltaA / 2))**2
+					zMomentum = - (zDisplacements[i][j][k]) * (a - (deltaA / 2))**2
 
 					newParticle = pmClass.Particle([x, y, z], [xMomentum, yMomentum, zMomentum])
 					core.PositionCorrect(newParticle, nGrid)

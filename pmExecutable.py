@@ -38,7 +38,7 @@ startingA              = 0.100
 maxA                   = 1.000
 stepSize               = 0.01
 
-shootEvery             = 20
+shootEvery             = 2000
 outputAsSphere         = False
 
 outputPowerSpectrum    = True
@@ -123,7 +123,7 @@ print "Iterating..."
 a = startingA
 iterationStart = time.time()
 frameNo = 1
-maxFrameNo = int((maxA - startingA) / stepSize) + 1
+maxFrameNo = int(round((maxA - startingA) / stepSize)) + 1
 
 if outputSystemEnergy:
 	energyFile = open("energyResults.txt", "w")
@@ -143,25 +143,26 @@ while frameNo < maxFrameNo:
 			sphereF.write("x y z LocalDensity\n")
 
 	densityField   = core.CalculateDensityField(nGrid, particleList)
-	if not usePPmethod:
+	if usePPmethod == 'False':
 		potentialField = core.SolvePotential(densityField, a, greensFunction, preComputeGreens)
 
 	accumulatedEnergy = 0
+
 	if frameNo == maxFrameNo/2:
 		middlePowerSpectrum = core.CalculatePowerSpectrum(densityField, nGrid, lBox, dk)
 
 	for i, particle in enumerate(particleList):
 
-		if not usePPmethod:
+		if usePPmethod == 'False':
 			particle.acceleration  = core.CalculateParticleAcceleration(particle, potentialField)
 		else:
 			core.CalculateParticleAccelerationPP(particle, i, particleList, numParticles)    
 		particle.halfStepMomentum += np.multiply(core.GetF(a - stepSize) * stepSize, particle.acceleration)
-		localDensity               = core.FindLocalDensity(particle, densityField)
 		particle.position         += np.multiply((a - (stepSize / 2))**(-2) * core.GetF(a - (stepSize / 2)) * stepSize, particle.halfStepMomentum)
 		core.PositionCorrect(particle, nGrid)
+		localDensity               = core.FindLocalDensity(particle, densityField)
 
-		if usePPmethod:
+		if usePPmethod == 'False':
 			particle.accumulatedForce = [0.0, 0.0, 0.0]
 
 		if shoot:
