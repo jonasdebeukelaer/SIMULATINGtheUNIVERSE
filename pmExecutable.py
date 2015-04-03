@@ -24,7 +24,7 @@ nGrid                  = 32
 lBox 				   = 250
 ns                     = 1
 
-numParticles           = 0
+numParticles           = 'grafic'
 positionDistribution   = pmClass.PositionDist.zeldovich
 velocityDistribution   = pmClass.VelocityDist.zeldovich
 
@@ -42,6 +42,7 @@ shootEvery             = 2
 outputAsSphere         = False
 
 outputPowerSpectrum    = True
+dk = 0.5
 
 #----------------DEBUG PARAMETERS----------------#
 
@@ -55,11 +56,13 @@ outputDensityField     = False
 
 particleList = []
 if numParticles == 'grafic':
-	graficConditions = open('p3m_32.dat', 'r')
+	graficConditions = open('p3m_200.dat', 'r')
 
 	params     = graficConditions.readline()
 	paramsList = params.split()
-	startingA  = float("{0:.3f}".format(float(paramsList[6])))
+	#startingA  = float("{0:.3f}".format(float(paramsList[6])))
+	startingA  = 1.0/float("{0:.3f}".format(float(paramsList[6])))
+	print startingA
 	factor     = startingA - (stepSize / 2)
 
 	for pV in graficConditions:
@@ -112,7 +115,7 @@ initial = open("Results/values_frame0.3D", "w")
 initial.write("x y z LocalDensity\n")
 for particle in particleList:
 	localDensity = core.FindLocalDensity(particle, densityField)
-	initial.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], localDensity))
+	initial.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], localDensity+1))
 initial.write("%f %f %f %f\n%f %f %f %f\n" % (nGrid / 2, nGrid / 2, nGrid / 2, 0., - nGrid / 2, - nGrid / 2, - nGrid / 2, 0.))
 initial.close()
 
@@ -128,7 +131,7 @@ if outputSystemEnergy:
 	startE = 0
 
 if outputPowerSpectrum:
-	initialPowerSpectrum = core.CalculatePowerSpectrum(densityField, nGrid, lBox)
+	initialPowerSpectrum = core.CalculatePowerSpectrum(densityField, nGrid, lBox, dk)
 
 while frameNo < maxFrameNo:
 	shoot = True if (frameNo % shootEvery) == 0 else False
@@ -145,6 +148,9 @@ while frameNo < maxFrameNo:
 
 	accumulatedEnergy = 0
 
+	if frameNo == maxFrameNo/2:
+		middlePowerSpectrum = core.CalculatePowerSpectrum(densityField, nGrid, lBox, dk)
+
 	for i, particle in enumerate(particleList):
 
 		if usePPmethod == False:
@@ -160,7 +166,7 @@ while frameNo < maxFrameNo:
 			particle.accumulatedForce = [0.0, 0.0, 0.0]
 
 		if shoot:
-			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], localDensity))
+			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], localDensity+1))
 			if outputAsSphere:
 				r = math.sqrt(particle.position[0]**2 + particle.position[1]**2 + particle.position[2]**2)
 				if r <= nGrid/2:
@@ -201,5 +207,5 @@ print '\n', time.time() - iterationStart
 Notifier.notify('The universe has been solved', title = 'Thanks to the finest minds of the 21st century...')
 
 if outputPowerSpectrum:
-	finalPowerSpectrum = core.CalculatePowerSpectrum(densityField, nGrid, lBox)
-	core.OutputPowerSpectrum(initialPowerSpectrum, middlePowerSpectrum, finalPowerSpectrum, startingA, nGrid, lBox)
+	finalPowerSpectrum = core.CalculatePowerSpectrum(densityField, nGrid, lBox, dk)
+	core.OutputPowerSpectrum(initialPowerSpectrum, middlePowerSpectrum, finalPowerSpectrum, startingA, nGrid, lBox, dk)
