@@ -21,7 +21,7 @@ print "Done\n"
 #------------INITIALISATION PARAMETERS-----------#
 
 nGrid                  = 32
-lBox 				   = 32
+lBox 				   = 250
 ns                     = 1
 
 numParticles           = 0
@@ -35,10 +35,10 @@ maxVelocity            = 1
 hasCenterParticle      = False
 
 startingA              = 0.1000
-maxA                   = 0.1010
+maxA                   = 1.0000
 stepSize               = 0.0010
 
-shootEvery             = 2000
+shootEvery             = 2
 outputAsSphere         = False
 
 outputPowerSpectrum    = True
@@ -64,7 +64,7 @@ if numParticles == 'grafic':
 
 	for pV in graficConditions:
 		values = pV.split()
-		particle = pmClass.Particle([float(values[0]) - 16., float(values[1]) - 16., float(values[2]) - 16.], [float(values[3]) * factor, float(values[4]) * factor, float(values[5]) * factor], 1)
+		particle = pmClass.Particle([float(values[0]) - 16., float(values[1]) - 16., float(values[2]) - 16.], [float(values[3]) * factor, float(values[4]) * factor, float(values[5]) * factor])
 		particleList.append(particle)
 else:
 	print "Initialising particles..."
@@ -112,7 +112,7 @@ initial = open("Results/values_frame0.3D", "w")
 initial.write("x y z LocalDensity\n")
 for particle in particleList:
 	localDensity = core.FindLocalDensity(particle, densityField)
-	initial.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], math.log(localDensity)))
+	initial.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], localDensity))
 initial.write("%f %f %f %f\n%f %f %f %f\n" % (nGrid / 2, nGrid / 2, nGrid / 2, 0., - nGrid / 2, - nGrid / 2, - nGrid / 2, 0.))
 initial.close()
 
@@ -140,14 +140,14 @@ while frameNo < maxFrameNo:
 			sphereF.write("x y z LocalDensity\n")
 
 	densityField   = core.CalculateDensityField(nGrid, particleList)
-	if usePPmethod == 'False':
+	if usePPmethod == False:
 		potentialField = core.SolvePotential(densityField, a, greensFunction, preComputeGreens)
 
 	accumulatedEnergy = 0
 
 	for i, particle in enumerate(particleList):
 
-		if usePPmethod == 'False':
+		if usePPmethod == False:
 			particle.acceleration  = core.CalculateParticleAcceleration(particle, potentialField)
 		else:
 			core.CalculateParticleAccelerationPP(particle, i, particleList, numParticles)    
@@ -156,15 +156,15 @@ while frameNo < maxFrameNo:
 		core.PositionCorrect(particle, nGrid)
 		localDensity               = core.FindLocalDensity(particle, densityField)
 
-		if usePPmethod == 'False':
+		if usePPmethod == False:
 			particle.accumulatedForce = [0.0, 0.0, 0.0]
 
 		if shoot:
-			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], math.log(localDensity)))
+			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], localDensity))
 			if outputAsSphere:
 				r = math.sqrt(particle.position[0]**2 + particle.position[1]**2 + particle.position[2]**2)
 				if r <= nGrid/2:
-					sphereF.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], math.log(localDensity)))
+					sphereF.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], localDensity))
 	if shoot:
 		if outputSystemEnergy:	
 			energyResults = debug.OutputTotalEnergy(particleList, potentialField, a, stepSize, nGrid)

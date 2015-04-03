@@ -16,7 +16,8 @@ def FindMeshIndex(position, nGrid):
 	return index
 
 def CalculateDensityField(nGrid, particleList):
-	densityFieldMesh = np.zeros([nGrid, nGrid, nGrid])
+	densityFieldMesh = np.empty([nGrid, nGrid, nGrid])
+	densityFieldMesh.fill(-1)
 
 	for particle in particleList:
 		xMesh = FindMeshIndex(particle.position[0], nGrid)
