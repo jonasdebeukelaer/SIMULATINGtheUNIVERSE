@@ -21,7 +21,7 @@ print "Done\n"
 #------------INITIALISATION PARAMETERS-----------#
 
 nGrid                  = 32
-lBox 				   = 200
+lBox 				   = 250
 ns                     = 1
 
 numParticles           = 0
@@ -34,9 +34,9 @@ preComputeGreens       = True
 maxVelocity            = 1
 hasCenterParticle      = False
 
-startingA              = 0.100
-maxA                   = 1.000
-stepSize               = 0.01
+startingA              = 0.1000
+maxA                   = 1.0000
+stepSize               = 0.0010
 
 shootEvery             = 2
 outputAsSphere         = False
@@ -142,7 +142,7 @@ while frameNo < maxFrameNo:
 			sphereF.write("x y z LocalDensity\n")
 
 	densityField   = core.CalculateDensityField(nGrid, particleList)
-	if usePPmethod == 'False':
+	if usePPmethod == False:
 		potentialField = core.SolvePotential(densityField, a, greensFunction, preComputeGreens)
 
 	accumulatedEnergy = 0
@@ -152,7 +152,7 @@ while frameNo < maxFrameNo:
 
 	for i, particle in enumerate(particleList):
 
-		if usePPmethod == 'False':
+		if usePPmethod == False:
 			particle.acceleration  = core.CalculateParticleAcceleration(particle, potentialField)
 		else:
 			core.CalculateParticleAccelerationPP(particle, i, particleList, numParticles)    
@@ -161,7 +161,7 @@ while frameNo < maxFrameNo:
 		core.PositionCorrect(particle, nGrid)
 		localDensity               = core.FindLocalDensity(particle, densityField)
 
-		if usePPmethod == 'False':
+		if usePPmethod == False:
 			particle.accumulatedForce = [0.0, 0.0, 0.0]
 
 		if shoot:
@@ -169,7 +169,7 @@ while frameNo < maxFrameNo:
 			if outputAsSphere:
 				r = math.sqrt(particle.position[0]**2 + particle.position[1]**2 + particle.position[2]**2)
 				if r <= nGrid/2:
-					sphereF.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], math.log(localDensity)))
+					sphereF.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], localDensity))
 	if shoot:
 		if outputSystemEnergy:	
 			energyResults = debug.OutputTotalEnergy(particleList, potentialField, a, stepSize, nGrid)
