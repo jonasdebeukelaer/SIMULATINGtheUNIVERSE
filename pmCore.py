@@ -193,7 +193,7 @@ def CalculatePowerSpectrum(densityField, nGrid, lBox, dk):
 		if numInBin[i] != 0:
 			binnedPowerSpectrum[i] /= numInBin[i]
 
-	print binnedPowerSpectrum
+	#print binnedPowerSpectrum
 
 	xScale = [((float(i) + 0.5)*dk/nGrid) for i in range(1, len(binnedPowerSpectrum)+1)]
 

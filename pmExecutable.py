@@ -21,7 +21,7 @@ print "Done\n"
 #------------INITIALISATION PARAMETERS-----------#
 
 nGrid                  = 32
-lBox 				   = 250
+lBox 				   = 32
 ns                     = 1
 
 numParticles           = 'grafic'
@@ -56,13 +56,12 @@ outputDensityField     = False
 
 particleList = []
 if numParticles == 'grafic':
-	graficConditions = open('p3m_200.dat', 'r')
+	graficConditions = open('p3m_32.dat', 'r')
 
 	params     = graficConditions.readline()
 	paramsList = params.split()
-	#startingA  = float("{0:.3f}".format(float(paramsList[6])))
-	startingA  = 1.0/float("{0:.3f}".format(float(paramsList[6])))
-	print startingA
+	startingA  = float("{0:.3f}".format(float(paramsList[6])))
+	#startingA  = 1.0/float("{0:.3f}".format(float(paramsList[6])))
 	factor     = startingA - (stepSize / 2)
 
 	for pV in graficConditions:
@@ -116,7 +115,7 @@ initial.write("x y z LocalDensity\n")
 for particle in particleList:
 	localDensity = core.FindLocalDensity(particle, densityField)
 	initial.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], localDensity+1))
-initial.write("%f %f %f %f\n%f %f %f %f\n" % (nGrid / 2, nGrid / 2, nGrid / 2, 0., - nGrid / 2, - nGrid / 2, - nGrid / 2, 0.))
+initial.write("%f %f %f %f\n%f %f %f %f\n" % (nGrid / 2, nGrid / 2, nGrid / 2, 1., - nGrid / 2, - nGrid / 2, - nGrid / 2, 1.))
 initial.close()
 
 print "Iterating..."
@@ -189,7 +188,7 @@ while frameNo < maxFrameNo:
 		if outputPotentialFieldXY:
 			debug.OutputPotentialFieldXY(potentialField, particleList, nGrid, frameNo)
 
-		f.write("%f %f %f %f\n%f %f %f %f\n" % (nGrid / 2, nGrid / 2, nGrid / 2, 0., - nGrid / 2, - nGrid / 2, - nGrid / 2, 0.))
+		f.write("%f %f %f %f\n%f %f %f %f\n" % (nGrid / 2, nGrid / 2, nGrid / 2, 1., - nGrid / 2, - nGrid / 2, - nGrid / 2, 1.))
 		f.close()
 
 	helpers.OutputPercentage(frameNo, (maxA - startingA) / stepSize, time.time() - iterationStart)
