@@ -64,7 +64,7 @@ plt.xlabel(r'$N_g$', fontsize=20.0, y=1.01)
 plt.ylabel(r'Time Elapsed / s')
 plt.title(r'Execution Time for One Time Step vs. $N_g$')
 plt.legend(['Direct Method', 'Particle Mesh'], loc=4)
-plt.text(1.2, 100, r'$\frac{d(log(t))}{d(log(N_g))}=%.2f\pm%.2f$' % (ppSlope, ppSlopeError), fontsize = 19)
+plt.text(1.1, 100, r'$\frac{d(log(t))}{d(log(N_g))}=%.2f\pm%.2f$' % (ppSlope, ppSlopeError), fontsize = 19)
 plt.text(55, 1, r'$\frac{d(log(t))}{d(log(N_g))}=%.2f\pm%.2f$' % (pmSlope, pmSlopeError), fontsize = 19)
 plt.grid(True)
 
