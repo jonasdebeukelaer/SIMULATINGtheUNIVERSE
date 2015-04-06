@@ -46,12 +46,15 @@ for dataSet in processingResults:
 		pmY.append(average)
 		pmError.append(error)
 
-plt.plot(ppX, ppY, pmX, pmY, 'r', linewidth=2.0)
+plt.plot(ppX, ppY, 'k-o', pmX, pmY, 'k--o', linewidth=1.0)
 plt.xscale('log')
 plt.yscale('log')
-plt.xlabel(r'$N_g$')
+plt.xlabel(r'$N_g$', fontsize=20.0, y=1.01)
 plt.ylabel(r'Time Elapsed / s')
-plt.title(r'Execution Time for One Time Step vs. $N_g$')
-plt.legend(['Direct Method', 'Particle Mesh'])
+plt.title(r'Execution Time for One Time Step vs. $N_g$', y=1.01)
+plt.legend(['PP', 'PM'], loc=4)
 plt.grid(True)
+
+plt.gcf().subplots_adjust(bottom=0.15)
+
 plt.show()
