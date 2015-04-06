@@ -36,13 +36,13 @@ def ComputeDisplacementVectors(nGrid, lBox, ns):
 				kSquare = float(kx**2 + ky**2 + kz**2)
 				k       = math.sqrt(kSquare)
 				if kSquare != 0:
-					powerValue = 2 * math.pi**2 * 10**(-9) * ((k * nGrid) / (lBox * 0.05))**ns
+					powerValue = 2 * math.pi**2 * 10**(-8) * ((k * nGrid) / (lBox * 0.05))**ns
 					ak         = math.sqrt(powerValue) * random.gauss(0., 1.) / ((k * nGrid / lBox)**2 * math.sqrt(2))
 					bk         = math.sqrt(powerValue) * random.gauss(0., 1.) / ((k * nGrid / lBox)**2 * math.sqrt(2))
 				else:
 					ak = 0
 					bk = 0
-				ck = (ak - bk * 1j) # / 2
+				ck = (ak - bk * 1j)
 
 				xDisplacementFourier[l][m][n] = ck * kx
 				yDisplacementFourier[l][m][n] = ck * ky

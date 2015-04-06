@@ -170,11 +170,11 @@ def CalculatePowerSpectrum(densityField, nGrid, lBox, dk):
 
 	kShape = centeredDensityFourier.shape
 	kRadii = [kShape[0]/2, kShape[1]/2, kShape[2]]
-	numGridBoxes = kShape[0] * kShape[1] * kShape[2]
 
-	numberFourierModes = int((1.0*nGrid/dk))
-	binnedPowerSpectrum = np.zeros(numberFourierModes)
-	numInBin = [0] * numberFourierModes
+	fourierRadius = int((1.0*nGrid/2.0))
+	fourierBins   = int(fourierRadius/dk)
+	binnedPowerSpectrum = np.zeros(fourierBins)
+	numInBin = [0] * fourierBins
 	bin = 0
 
 	for i in range(0, kShape[0]):
@@ -184,26 +184,29 @@ def CalculatePowerSpectrum(densityField, nGrid, lBox, dk):
 			for k in range(0, kShape[2]):
 				kkSquare = k**2
 				kr = math.sqrt(kiSquare + kjSquare + kkSquare)
-				if kr != 0:
+				if kr != 0 and kr < fourierRadius:
 					bin = int(kr / dk)
 					numInBin[bin] += 1
 					binnedPowerSpectrum[bin] += 2*((centeredDensityFourier[i][j][k].real)**2 + (centeredDensityFourier[i][j][k].imag)**2)
 
-	for i in range(1, numberFourierModes):
+	for i in range(1, fourierBins):
 		if numInBin[i] != 0:
 			binnedPowerSpectrum[i] /= numInBin[i]
 
 	#print binnedPowerSpectrum
 
-	xScale = [((float(i) + 0.5)*dk/nGrid) for i in range(1, len(binnedPowerSpectrum)+1)]
+	xScale = [((float(i) - 0.5)*dk/nGrid) for i in range(1, len(binnedPowerSpectrum)+1)]
 
-	plt.plot(np.array(xScale), np.array(binnedPowerSpectrum))
-	plt.show()
+	#plt.plot(np.array(xScale), np.array(binnedPowerSpectrum))
+	#plt.show()
 
 	return list(binnedPowerSpectrum)
 
 def OutputPowerSpectrum(initialPowerSpectrum, middlePowerSpectrum, finalPowerSpectrum, startingA, nGrid, lBox, dk):
-	xScale = [((float(i) + 0.5)*dk/nGrid) for i in range(1, len(finalPowerSpectrum)+1)]
+	xScale = [((float(i) - 0.5)*lBox*dk/nGrid) for i in range(1, len(finalPowerSpectrum)+1)]
+
+	for index, i in enumerate(finalPowerSpectrum):
+		print i
 
 	plt.plot(np.array(xScale), np.array(finalPowerSpectrum))
 	plt.plot(np.array(xScale), np.array(initialPowerSpectrum))

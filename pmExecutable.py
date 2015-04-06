@@ -24,11 +24,11 @@ nGrid                  = 32
 lBox 				   = 32
 ns                     = 1
 
-numParticles           = 'grafic'
+numParticles           = 0
 positionDistribution   = pmClass.PositionDist.zeldovich
 velocityDistribution   = pmClass.VelocityDist.zeldovich
 
-usePPmethod            = False
+usePPmethod            = 'False'
 preComputeGreens       = True
 
 maxVelocity            = 1
@@ -42,7 +42,7 @@ shootEvery             = 2
 outputAsSphere         = False
 
 outputPowerSpectrum    = True
-dk = 0.5
+powerSpectrumRes       = 0.5
 
 #----------------DEBUG PARAMETERS----------------#
 
@@ -130,7 +130,7 @@ if outputSystemEnergy:
 	startE = 0
 
 if outputPowerSpectrum:
-	initialPowerSpectrum = core.CalculatePowerSpectrum(densityField, nGrid, lBox, dk)
+	initialPowerSpectrum = core.CalculatePowerSpectrum(densityField, nGrid, lBox, powerSpectrumRes)
 
 while frameNo < maxFrameNo:
 	shoot = True if (frameNo % shootEvery) == 0 else False
@@ -148,7 +148,7 @@ while frameNo < maxFrameNo:
 	accumulatedEnergy = 0
 
 	if frameNo == maxFrameNo/2:
-		middlePowerSpectrum = core.CalculatePowerSpectrum(densityField, nGrid, lBox, dk)
+		middlePowerSpectrum = core.CalculatePowerSpectrum(densityField, nGrid, lBox, powerSpectrumRes)
 
 	for i, particle in enumerate(particleList):
 
@@ -165,7 +165,7 @@ while frameNo < maxFrameNo:
 			particle.accumulatedForce = [0.0, 0.0, 0.0]
 
 		if shoot:
-			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], localDensity+1))
+			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], localDensity))
 			if outputAsSphere:
 				r = math.sqrt(particle.position[0]**2 + particle.position[1]**2 + particle.position[2]**2)
 				if r <= nGrid/2:
@@ -206,5 +206,5 @@ print '\n', time.time() - iterationStart
 Notifier.notify('The universe has been solved', title = 'Thanks to the finest minds of the 21st century...')
 
 if outputPowerSpectrum:
-	finalPowerSpectrum = core.CalculatePowerSpectrum(densityField, nGrid, lBox, dk)
-	core.OutputPowerSpectrum(initialPowerSpectrum, middlePowerSpectrum, finalPowerSpectrum, startingA, nGrid, lBox, dk)
+	finalPowerSpectrum = core.CalculatePowerSpectrum(densityField, nGrid, lBox, powerSpectrumRes)
+	core.OutputPowerSpectrum(initialPowerSpectrum, middlePowerSpectrum, finalPowerSpectrum, startingA, nGrid, lBox, powerSpectrumRes)

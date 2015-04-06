@@ -57,14 +57,17 @@ pmSlopeError = (pmSteepSlope - pmFlatSlope) / 2.
 ppSlope, ppIntercept = np.polyfit(np.log(ppX), np.log(ppY), 1)
 pmSlope, pmIntercept = np.polyfit(np.log(pmX[2:]), np.log(pmY[2:]), 1)
 
-plt.plot(ppX, ppY, pmX, pmY, 'r', linewidth=2.0)
+plt.plot(ppX, ppY, 'k-o', pmX, pmY, 'k--o', linewidth=1.0)
 plt.xscale('log')
 plt.yscale('log')
-plt.xlabel(r'$N_g$')
+plt.xlabel(r'$N_g$', fontsize=20.0, y=1.01)
 plt.ylabel(r'Time Elapsed / s')
 plt.title(r'Execution Time for One Time Step vs. $N_g$')
-plt.legend(['Direct Method', 'Particle Mesh'])
+plt.legend(['Direct Method', 'Particle Mesh'], loc=4)
 plt.text(1.2, 100, r'$\frac{d(log(t))}{d(log(N_g))}=%.2f\pm%.2f$' % (ppSlope, ppSlopeError), fontsize = 19)
 plt.text(55, 1, r'$\frac{d(log(t))}{d(log(N_g))}=%.2f\pm%.2f$' % (pmSlope, pmSlopeError), fontsize = 19)
 plt.grid(True)
+
+plt.gcf().subplots_adjust(bottom=0.15)
+
 plt.show()
