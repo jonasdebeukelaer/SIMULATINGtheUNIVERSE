@@ -205,14 +205,11 @@ def CalculatePowerSpectrum(densityField, nGrid, lBox, dk):
 def OutputPowerSpectrum(initialPowerSpectrum, middlePowerSpectrum, finalPowerSpectrum, startingA, nGrid, lBox, dk):
 	xScale = [((float(i) - 0.5)*nGrid*dk/lBox) for i in range(1, len(finalPowerSpectrum)+1)]
 
-	for index, i in enumerate(finalPowerSpectrum):
-		print i
-
 	plt.plot(np.array(xScale), np.array(finalPowerSpectrum))
 	plt.plot(np.array(xScale), np.array(initialPowerSpectrum))
 	plt.plot(np.array(xScale), np.array(middlePowerSpectrum))
-	plt.xlabel('Fourier mode')
-	plt.ylabel('Amplitude')
-	plt.title('Dimensionless Density Contrast Power Spectra')
-	plt.legend([r'$a=1.00$', r'$a=%.2f$' % ((startingA + 1) / 2.), r'$a=%.2f$' % startingA])
+	plt.xlabel(r'Fourier mode / $Mpc s^{-1}$')
+	plt.ylabel(r'$P_\delta (k)$')
+	plt.title(r'Dimensionless Density Contrast Power Spectra ($N_g=$%d, $L_{box}=$%d)' % (nGrid, lBox))
+	plt.legend([r'$a=1.000$', r'$a=%.3f$' % ((startingA + 1) / 2.), r'$a=%.3f$' % startingA], loc = 2)
 	plt.show()

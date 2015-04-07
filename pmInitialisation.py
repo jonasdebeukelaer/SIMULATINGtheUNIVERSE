@@ -9,6 +9,24 @@ import random
 import time
 import sys
 
+def CalculateStartingA(x, y, z):
+	print "\nCalculating starting A..."
+	maxList = [np.amax(np.absolute(x)), np.amax(np.absolute(y)), np.amax(np.absolute(z))]
+	maxDisplacement = max(maxList)
+	print maxDisplacement
+	#displacementAmplitudes = x**2 + y**2 + z**2
+	#print np.amax(displacementAmplitudes)
+	#startingA = math.sqrt(3 * 0.5**2) / math.sqrt(np.amax(displacementAmplitudes))
+	startingA = 0.5 / maxDisplacement
+	if startingA < 0.001:
+		sys.exit("You literally can't start soon enough... starting a calculated as %f" % startingA)
+	formattedA = float("{0:.3f}".format(startingA))
+	if formattedA >= 1.:
+		sys.exit("Unable to execute simulating, starting a calculated as %f" % formattedA)
+	else:
+		print ("startingA = %f" % formattedA)
+	return formattedA
+
 def ComputeDisplacementVectors(nGrid, lBox, ns):
 	xDisplacementFourier = np.zeros([nGrid, nGrid, (nGrid / 2) + 1], dtype = 'complex128')
 	yDisplacementFourier = np.zeros([nGrid, nGrid, (nGrid / 2) + 1], dtype = 'complex128')
@@ -36,7 +54,7 @@ def ComputeDisplacementVectors(nGrid, lBox, ns):
 				kSquare = float(kx**2 + ky**2 + kz**2)
 				k       = math.sqrt(kSquare)
 				if kSquare != 0:
-					powerValue = 2 * math.pi**2 * 10**(-8) * ((k * nGrid) / (lBox * 0.05))**ns
+					powerValue = 2 * math.pi**2 * 2 * 10**(-9) * ((k * nGrid) / (lBox * 0.05))**ns
 					ak         = math.sqrt(powerValue) * random.gauss(0., 1.) / ((k * nGrid / lBox)**2 * math.sqrt(2))
 					bk         = math.sqrt(powerValue) * random.gauss(0., 1.) / ((k * nGrid / lBox)**2 * math.sqrt(2))
 				else:
@@ -61,12 +79,12 @@ def InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistr
 
 	if positionDistribution == pmClass.PositionDist.zeldovich:
 
-		displacementVectors = ComputeDisplacementVectors(nGrid, lBox, ns)
-		xDisplacements = (displacementVectors[0])
-		yDisplacements = (displacementVectors[1])
-		zDisplacements = (displacementVectors[2])
+		xDisplacements, yDisplacements, zDisplacements = ComputeDisplacementVectors(nGrid, lBox, ns)
 
-		print '\nCreating particles...'
+		if a == 'auto':
+			a = CalculateStartingA(xDisplacements, yDisplacements, zDisplacements)
+
+		print 'Creating particles...'
 		creationStart = time.time()
 		particlesCreated = 0
 		gridX = - nGrid / 2
@@ -191,4 +209,4 @@ def InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistr
 	else:
 		print 'Invalid velocity distribution selected'
 
-	return particleList
+	return [a, particleList]
