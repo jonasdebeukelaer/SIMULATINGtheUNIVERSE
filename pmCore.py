@@ -205,11 +205,15 @@ def CalculatePowerSpectrum(densityField, nGrid, lBox, dk):
 def OutputPowerSpectrum(initialPowerSpectrum, middlePowerSpectrum, finalPowerSpectrum, startingA, nGrid, lBox, dk):
 	xScale = [((float(i) - 0.5)*nGrid*dk/lBox) for i in range(1, len(finalPowerSpectrum)+1)]
 
+	finalSlope, finalIntercept     = np.polyfit(np.array(xScale), np.array(finalPowerSpectrum), 1)
+	middleSlope, middleIntercept   = np.polyfit(np.array(xScale), np.array(middlePowerSpectrum), 1)
+	initialSlope, initialIntercept = np.polyfit(np.array(xScale), np.array(initialPowerSpectrum), 1)
+
 	plt.plot(np.array(xScale), np.array(finalPowerSpectrum))
-	plt.plot(np.array(xScale), np.array(initialPowerSpectrum))
 	plt.plot(np.array(xScale), np.array(middlePowerSpectrum))
+	plt.plot(np.array(xScale), np.array(initialPowerSpectrum))
 	plt.xlabel(r'Fourier mode / $Mpc s^{-1}$')
 	plt.ylabel(r'$P_\delta (k)$')
 	plt.title(r'Dimensionless Density Contrast Power Spectra ($N_g=$%d, $L_{box}=$%d)' % (nGrid, lBox))
-	plt.legend([r'$a=1.000$', r'$a=%.3f$' % ((startingA + 1) / 2.), r'$a=%.3f$' % startingA], loc = 2)
+	plt.legend([r'$a=1.000$, $dP/dk=%.3f$' % finalSlope, r'$a=%.3f$, $dP/dk=%.3f$' % (((startingA + 1) / 2.), middleSlope), r'$a=%.3f$, $dP/dk=%.3f$' % (startingA, initialSlope)], loc = 2)
 	plt.show()
