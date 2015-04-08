@@ -197,8 +197,8 @@ def CalculatePowerSpectrum(densityField, nGrid, lBox, dk):
 
 	xScale = [((float(i) - 0.5)*dk/nGrid) for i in range(1, len(binnedPowerSpectrum)+1)]
 
-	#plt.plot(np.array(xScale), np.array(binnedPowerSpectrum))
-	#plt.show()
+	plt.plot(np.array(xScale), np.array(binnedPowerSpectrum))
+	plt.show()
 
 	return list(binnedPowerSpectrum)
 

@@ -81,38 +81,44 @@ def InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistr
 
 		xDisplacements, yDisplacements, zDisplacements = ComputeDisplacementVectors(nGrid, lBox, ns)
 
-		if a == 'auto':
-			a = CalculateStartingA(xDisplacements, yDisplacements, zDisplacements)
+		maxContrast = 0
+		aIncrease = 0.001
+		while maxContrast <= 2:
+			if a == 'auto':
+				a = CalculateStartingA(xDisplacements, yDisplacements, zDisplacements)
+			a += aIncrease
 
-		displacements = 0
-		momenta       = 0
+			print 'Creating particles...'
+			creationStart = time.time()
+			particlesCreated = 0
+			gridX = - nGrid / 2
+			for i in range(0, nGrid):
+				gridX += 1
+				gridY = - nGrid / 2
+				for j in range(0, nGrid):
+					gridY += 1
+					gridZ = - nGrid / 2
+					for k in range(0, nGrid): 
+						gridZ += 1
+						particlesCreated += 1
+					
+						x = gridX - a * (xDisplacements[i][j][k])
+						y = gridY - a * (yDisplacements[i][j][k])
+						z = gridZ - a * (zDisplacements[i][j][k])
 
-		print 'Creating particles...'
-		creationStart = time.time()
-		particlesCreated = 0
-		gridX = - nGrid / 2
-		for i in range(0, nGrid):
-			gridX += 1
-			gridY = - nGrid / 2
-			for j in range(0, nGrid):
-				gridY += 1
-				gridZ = - nGrid / 2
-				for k in range(0, nGrid): 
-					gridZ += 1
-					particlesCreated += 1
-				
-					x = gridX - a * (xDisplacements[i][j][k])
-					y = gridY - a * (yDisplacements[i][j][k])
-					z = gridZ - a * (zDisplacements[i][j][k])
+						xMomentum = - (xDisplacements[i][j][k]) * (a - (deltaA / 2))**2
+						yMomentum = - (yDisplacements[i][j][k]) * (a - (deltaA / 2))**2
+						zMomentum = - (zDisplacements[i][j][k]) * (a - (deltaA / 2))**2
 
-					xMomentum = - (xDisplacements[i][j][k]) * (a - (deltaA / 2))**2
-					yMomentum = - (yDisplacements[i][j][k]) * (a - (deltaA / 2))**2
-					zMomentum = - (zDisplacements[i][j][k]) * (a - (deltaA / 2))**2
+						newParticle = pmClass.Particle([x, y, z], [xMomentum, yMomentum, zMomentum])
+						core.PositionCorrect(newParticle, nGrid)
+						particleList.append(newParticle)
+						helpers.OutputPercentage(particlesCreated, nGrid**3, time.time() - creationStart)
 
-					newParticle = pmClass.Particle([x, y, z], [xMomentum, yMomentum, zMomentum])
-					core.PositionCorrect(newParticle, nGrid)
-					particleList.append(newParticle)
-					helpers.OutputPercentage(particlesCreated, nGrid**3, time.time() - creationStart)
+			densityField = core.CalculateDensityField(nGrid, particleList)
+			maxContrast = int(np.amax(densityField))
+			print maxContrast, a, aIncrease
+
 
 	elif positionDistribution == pmClass.PositionDist.sineWave1D:
 		wavelength = nGrid

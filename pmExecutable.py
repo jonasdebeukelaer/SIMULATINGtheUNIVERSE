@@ -20,9 +20,9 @@ print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-nGrid                  = 64
-lBox 				   = 500
-ns                     = 0.9
+nGrid                  = 20
+lBox 				   = 256
+ns                     = 1
 
 numParticles           = 0
 positionDistribution   = pmClass.PositionDist.zeldovich
@@ -36,7 +36,7 @@ hasCenterParticle      = False
 
 startingA              = 'auto'
 maxA                   = 1.000
-stepSize               = 0.001
+stepSize               = 0.01
 
 shootEvery             = 2
 outputAsSphere         = False
