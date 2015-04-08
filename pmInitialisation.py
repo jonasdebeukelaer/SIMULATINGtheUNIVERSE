@@ -82,11 +82,11 @@ def InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistr
 		xDisplacements, yDisplacements, zDisplacements = ComputeDisplacementVectors(nGrid, lBox, ns)
 
 		maxContrast = 0
-		aIncrease = 0.
+		aIncrease = 0.001
 		while maxContrast <= 2:
 			if a == 'auto':
 				a = CalculateStartingA(xDisplacements, yDisplacements, zDisplacements)
-				a += aIncrease
+			a += aIncrease
 
 			print 'Creating particles...'
 			creationStart = time.time()
@@ -118,7 +118,6 @@ def InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistr
 			densityField = core.CalculateDensityField(nGrid, particleList)
 			maxContrast = int(np.amax(densityField))
 			print maxContrast, a, aIncrease
-			aIncrease += 0.001
 
 
 	elif positionDistribution == pmClass.PositionDist.sineWave1D:
