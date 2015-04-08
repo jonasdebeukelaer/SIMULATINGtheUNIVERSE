@@ -20,29 +20,31 @@ print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-nGrid                  = 32
-lBox 				   = 250
+nGrid                  = 20
+lBox 				   = 256
 ns                     = 1
 
 numParticles           = 0
 positionDistribution   = pmClass.PositionDist.zeldovich
 velocityDistribution   = pmClass.VelocityDist.zeldovich
 
-usePPmethod            = 'False'
+usePPmethod            = False
 preComputeGreens       = True
 
 maxVelocity            = 1
 hasCenterParticle      = False
 
-startingA              = 0.1000
-maxA                   = 1.0000
-stepSize               = 0.0010
+startingA              = 'auto'
+maxA                   = 1.000
+stepSize               = 0.01
 
 shootEvery             = 2
 outputAsSphere         = False
 
 outputPowerSpectrum    = True
 powerSpectrumRes       = 0.5
+
+sendEmail              = False
 
 #----------------DEBUG PARAMETERS----------------#
 
@@ -70,7 +72,11 @@ if numParticles == 'grafic':
 		particleList.append(particle)
 else:
 	print "Initialising particles..."
-	particleList = initialisation.InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA, stepSize, lBox, ns)
+	startingA, particleList = initialisation.InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA, stepSize, lBox, ns)
+
+print '\n'
+print startingA
+#sys.exit('Everything good?')
 
 if positionDistribution == pmClass.PositionDist.zeldovich or numParticles == 'grafic':
 	numParticles = len(particleList)
@@ -114,8 +120,8 @@ initial = open("Results/values_frame0.3D", "w")
 initial.write("x y z LocalDensity\n")
 for particle in particleList:
 	localDensity = core.FindLocalDensity(particle, densityField)
-	initial.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], localDensity))
-initial.write("%f %f %f %f\n%f %f %f %f\n" % (nGrid / 2, nGrid / 2, nGrid / 2, 0., - nGrid / 2, - nGrid / 2, - nGrid / 2, 0.))
+	initial.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], localDensity+1))
+initial.write("%f %f %f %f\n%f %f %f %f\n" % (nGrid / 2, nGrid / 2, nGrid / 2, 1., - nGrid / 2, - nGrid / 2, - nGrid / 2, 1.))
 initial.close()
 
 print "Iterating..."
@@ -165,11 +171,11 @@ while frameNo < maxFrameNo:
 			particle.accumulatedForce = [0.0, 0.0, 0.0]
 
 		if shoot:
-			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], localDensity))
+			f.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], localDensity+1))
 			if outputAsSphere:
 				r = math.sqrt(particle.position[0]**2 + particle.position[1]**2 + particle.position[2]**2)
 				if r <= nGrid/2:
-					sphereF.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], localDensity))
+					sphereF.write("%f %f %f %f\n" % (particle.position[0], particle.position[1], particle.position[2], localDensity+1))
 	if shoot:
 		if outputSystemEnergy:	
 			energyResults = debug.OutputTotalEnergy(particleList, potentialField, a, stepSize, nGrid)
@@ -188,7 +194,7 @@ while frameNo < maxFrameNo:
 		if outputPotentialFieldXY:
 			debug.OutputPotentialFieldXY(potentialField, particleList, nGrid, frameNo)
 
-		f.write("%f %f %f %f\n%f %f %f %f\n" % (nGrid / 2, nGrid / 2, nGrid / 2, 0., - nGrid / 2, - nGrid / 2, - nGrid / 2, 0.))
+		f.write("%f %f %f %f\n%f %f %f %f\n" % (nGrid / 2, nGrid / 2, nGrid / 2, 1., - nGrid / 2, - nGrid / 2, - nGrid / 2, 1.))
 		f.close()
 
 	helpers.OutputPercentage(frameNo, (maxA - startingA) / stepSize, time.time() - iterationStart)
@@ -204,6 +210,8 @@ if outputSystemEnergy:
 
 print '\n', time.time() - iterationStart
 Notifier.notify('The universe has been solved', title = 'Thanks to the finest minds of the 21st century...')
+if sendEmail: 
+	helpers.SendEmail()
 
 if outputPowerSpectrum:
 	finalPowerSpectrum = core.CalculatePowerSpectrum(densityField, nGrid, lBox, powerSpectrumRes)

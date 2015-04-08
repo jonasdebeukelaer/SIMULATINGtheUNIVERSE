@@ -21,18 +21,20 @@ fig = plt.figure()
 
 ax = fig.add_subplot(111)
 #fig.subplots_adjust(top=0.85)
-ax.set_title('Effect of Time Step Size on Final Power Spectrum (a=1)')
+ax.set_title('Effect of Time Step Size on Final $P(k)$ ($a=1$)', y=1.01)
 
-ax.set_xlabel('k /Mpc')
-ax.set_ylabel('P(k) /m^3')
-
+ax.set_xlabel('$k /Mpc^{-1}$', y=1.01)
+ax.set_ylabel('$P(k)$ /$10^3$')
 
 
 for spectrum in powerSpectra:
+	for i, value in enumerate(spectrum):
+		spectrum[i] = float(value) / 1000
 	plt.plot(x, spectrum)
+
+ax.legend(['$a=0.0005$', '$a=0.001$', '$a=0.002$', '$a=0.005$', '$a=0.01$', '$a=0.02$', '$a=0.05$', '$a=0.1$'], loc=2, fontsize=17)
+plt.gcf().subplots_adjust(bottom=0.15)
 plt.show()
-
-
 
 rawdata.close()
 

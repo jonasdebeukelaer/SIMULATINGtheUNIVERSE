@@ -20,15 +20,10 @@ greensTest.py
 lena.bmp
 *.pyc
 test.py
-grafic/
-grafic-2.101.tar.gz
-grafic-2_101/
-grafic.tgz
-Results404040/
-Results505050/
 energyResults.txt
 DensityResults/
 Results*/
 CalcAverageGraficAmp.py
 p3m_32.dat
 *.dat
+testFouriernorm.py
