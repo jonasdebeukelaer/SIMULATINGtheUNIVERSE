@@ -20,9 +20,9 @@ print "Done\n"
 
 #------------INITIALISATION PARAMETERS-----------#
 
-nGrid                  = 32
-lBox 				   = 32
-ns                     = 1
+nGrid                  = 64
+lBox 				   = 500
+ns                     = 0.9
 
 numParticles           = 0
 positionDistribution   = pmClass.PositionDist.zeldovich
@@ -63,20 +63,16 @@ if numParticles == 'grafic':
 	params     = graficConditions.readline()
 	paramsList = params.split()
 	startingA  = float("{0:.3f}".format(float(paramsList[6])))
-	#startingA  = 1.0/float("{0:.3f}".format(float(paramsList[6])))
 	factor     = startingA - (stepSize / 2)
 
 	for pV in graficConditions:
 		values = pV.split()
 		particle = pmClass.Particle([float(values[0]) - 16., float(values[1]) - 16., float(values[2]) - 16.], [float(values[3]) * factor, float(values[4]) * factor, float(values[5]) * factor])
 		particleList.append(particle)
+
 else:
 	print "Initialising particles..."
 	startingA, particleList = initialisation.InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistribution, maxVelocity, startingA, stepSize, lBox, ns)
-
-print '\n'
-print startingA
-#sys.exit('Everything good?')
 
 if positionDistribution == pmClass.PositionDist.zeldovich or numParticles == 'grafic':
 	numParticles = len(particleList)
@@ -141,7 +137,7 @@ if outputPowerSpectrum:
 while frameNo < maxFrameNo:
 	shoot = True if (frameNo % shootEvery) == 0 else False
 	if shoot:
-		f = open("Results/values_frame%d.3D" % (frameNo), "w")
+		f = open("Results/values_frame%d.3D" % frameNo, "w")
 		f.write("x y z LocalDensity\n")
 		if outputAsSphere:
 			sphereF = open("Results/sphereValues_frame%d.3D" % (frameNo), "w")

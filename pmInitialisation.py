@@ -54,7 +54,7 @@ def ComputeDisplacementVectors(nGrid, lBox, ns):
 				kSquare = float(kx**2 + ky**2 + kz**2)
 				k       = math.sqrt(kSquare)
 				if kSquare != 0:
-					powerValue = 2 * math.pi**2 * 2 * 10**(-9) * ((k * nGrid) / (lBox * 0.05))**ns
+					powerValue = 2 * math.pi**2 * 2 * 10**(-9) * ((k * nGrid) / (lBox * 0.05))**ns #* 4 * math.pi**2
 					ak         = math.sqrt(powerValue) * random.gauss(0., 1.) / ((k * nGrid / lBox)**2 * math.sqrt(2))
 					bk         = math.sqrt(powerValue) * random.gauss(0., 1.) / ((k * nGrid / lBox)**2 * math.sqrt(2))
 				else:
@@ -83,6 +83,9 @@ def InitialiseParticles(nGrid, numParticles, positionDistribution, velocityDistr
 
 		if a == 'auto':
 			a = CalculateStartingA(xDisplacements, yDisplacements, zDisplacements)
+
+		displacements = 0
+		momenta       = 0
 
 		print 'Creating particles...'
 		creationStart = time.time()
